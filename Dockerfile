@@ -46,6 +46,7 @@ COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
 RUN playwright install chromium-headless-shell
+RUN patchright install chromium-headless-shell
 
 COPY . .
 
@@ -54,6 +55,9 @@ COPY --from=builder /app/dist/assets /app/assets
 COPY --from=builder /app/dist/vite.svg /app/assets
 
 RUN cp conf.example.py conf.py
+
+# Cria as tabelas do sqlite em db/database.db (o createTable.py usa caminho relativo)
+RUN cd db && python createTable.py
 
 RUN mkdir -p /app/videoFile
 RUN mkdir -p /app/cookiesFile
