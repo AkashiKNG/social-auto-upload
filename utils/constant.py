@@ -1,3 +1,5 @@
+# ATENÇÃO: os valores em chinês deste arquivo são enviados aos próprios sites (categoria do vídeo,
+# nome da área no Bilibili). Traduzir qualquer um deles quebra o envio — por isso ficam como estão.
 import enum
 
 

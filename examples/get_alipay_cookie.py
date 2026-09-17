@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""获取支付宝生活号 cookie：打开浏览器扫码登录后自动保存到 cookies/alipay_uploader/account.json"""
+"""Pega o cookie da conta de vida do Alipay: abre o navegador, você entra pelo QR code e o cookie é salvo em cookies/alipay_uploader/account.json"""
 import asyncio
 import sys
 from pathlib import Path

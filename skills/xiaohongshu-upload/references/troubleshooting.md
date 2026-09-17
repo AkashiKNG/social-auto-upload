@@ -1,8 +1,8 @@
-# 故障排查
+# Solução de problemas
 
-## 找不到 `sau` 命令
+## O comando `sau` não é encontrado
 
-可以尝试以下方式：
+Tente assim:
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
@@ -17,62 +17,62 @@ sau xiaohongshu --help
 uv run sau xiaohongshu --help
 ```
 
-如果当前环境还没有安装项目：
+Se o projeto ainda não estiver instalado no ambiente:
 
 ```bash
 uv pip install -e .
 ```
 
-## cookie 无效或已过期
+## Cookie inválido ou expirado
 
-先检查 cookie 状态：
+Confira o estado primeiro:
 
 ```bash
 sau xiaohongshu check --account <account>
 ```
 
-如果无效，就重新登录：
+Se estiver inválido, entre na conta de novo:
 
 ```bash
 sau xiaohongshu login --account <account>
 ```
 
-## 无头登录二维码处理
+## QR code no login sem janela
 
-如果用户无法使用终端二维码输出：
+Se o usuário não conseguir usar o QR code impresso no terminal:
 
-- 查找 CLI 打印出来的临时二维码图片
-- agent 不要只把图片路径回给用户
-- agent 应优先直接把本地二维码图片展示/发送给用户扫码
+- procure a imagem temporária de QR code que a CLI gerou
+- não devolva só o caminho da imagem ao usuário
+- mostre ou envie a imagem local direto para ele escanear
 
-如果终端二维码显示不正常，优先使用保存下来的图片路径，而不是反复尝试随机的终端设置。
+Se o QR code do terminal aparecer torto, use a imagem salva em vez de ficar mexendo nas configurações do terminal.
 
-## 上传参数缺失
+## Falta algum parâmetro no envio
 
-### 视频上传
+### Envio de vídeo
 
-最少需要：
+O mínimo é:
 
 - `--account`
 - `--file`
 - `--title`
 
-### 图文上传
+### Envio de post de imagens
 
-最少需要：
+O mínimo é:
 
 - `--account`
 - `--images`
 - `--title`
 
-`--note` 当前是可选图文正文。
+O `--note` é opcional.
 
-## 定时发布
+## Publicação agendada
 
-时间格式使用：
+O formato de data e hora é:
 
 ```text
 YYYY-MM-DD HH:MM
 ```
 
-如果不需要定时发布，去掉 `--schedule` 即可改为立即发布。
+Sem publicação agendada, basta tirar o `--schedule` para publicar na hora.

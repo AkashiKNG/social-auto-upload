@@ -1,12 +1,16 @@
 # social-auto-upload
 
-`social-auto-upload` 是一个强大的自动化工具，旨在帮助内容创作者和运营者高效地将视频内容一键发布到多个国内外主流社交媒体平台。
-项目实现了对 `抖音`、`Bilibili`、`小红书`、`快手`、`视频号`、`百家号`、`支付宝生活号`、`微博`、`虎扑`、`TikTok` 以及 `YouTube` 等平台的视频上传、定时发布等功能。
-结合各平台 `uploader` 模块，您可以轻松配置和扩展支持的平台，并通过示例脚本快速上手。
+`social-auto-upload` é uma ferramenta de automação para quem cria conteúdo: ela publica seus vídeos, de uma vez, nas principais redes sociais.
+O projeto envia vídeos e agenda publicações no `Douyin`, `Bilibili`, `Xiaohongshu`, `Kuaishou`, `Canal do WeChat`, `Baijiahao`, `Alipay (conta de vida)`, `Weibo`, `Hupu`, `TikTok` e `YouTube`.
+Cada plataforma tem o seu módulo em `uploader`, então dá para configurar e acrescentar plataformas com facilidade, usando os scripts de exemplo como ponto de partida.
+
+> **Tradução para português do Brasil.** Este fork traduz a interface, as mensagens e a documentação. Textos em chinês que
+> são **conteúdo dos próprios sites** (botões que o robô procura na página, nomes de categoria enviados no formulário)
+> continuam no original de propósito: traduzi-los quebraria o login e o envio.
 
 <img src="media/show/tkupload.gif" alt="tiktok show" width="800"/>
 
-## 💎 赞助商
+## 💎 Patrocinadores
 
 <table width="100%">
  <tr>
@@ -16,7 +20,7 @@
       </a>
     </td>
     <td width="75%" align="left" valign="middle">
-      感谢 <a href="https://doloffer.com/" target="_blank">DolOffer</a> 对本项目的支持！对于做内容矩阵、多平台分发和 AI 自动化运营的创作者来说，ChatGPT、Claude、YouTube Premium、Spotify、Apple Music、Notion、Office 等数字工具往往是长期成本。DolOffer 提供 AI、视频、音乐和效率工具相关的订阅与充值服务，帮助用户更低成本地配置常用数字产品。更多说明可查看 <a href="https://github.com/Doloffer-g/guide" target="_blank">DolOffer Guide</a>。使用优惠码 <code>AI8888</code> 可额外享受 9 折优惠，具体价格和服务规则以官网为准。  
+      Obrigado à <a href="https://doloffer.com/" target="_blank">DolOffer</a> pelo apoio ao projeto! Para quem trabalha com várias contas, distribuição multiplataforma e automação com IA, ferramentas como ChatGPT, Claude, YouTube Premium, Spotify, Apple Music, Notion e Office viram um custo fixo. A DolOffer oferece assinaturas e recargas dessas ferramentas de IA, vídeo, música e produtividade por menos. Mais detalhes no <a href="https://github.com/Doloffer-g/guide" target="_blank">DolOffer Guide</a>. Com o cupom <code>AI8888</code> há 10% de desconto adicional; preços e regras valem os do site oficial.
     </td>
   </tr>
   <tr>
@@ -26,7 +30,7 @@
       </a>
     </td>
     <td width="75%" align="left" valign="middle">
-      轻视AI：一句话生产MG动画，适合知识，科普，讲解，教程，介绍等类型视频的低成本制作，视频矩阵，养号等，成本只有seedance等1%。现在<a href="https://chilltion.com/?ref=1y5k5k">注册</a>送1500积分
+      Chilltion AI: animações em motion graphics a partir de uma frase, boas para vídeos de conhecimento, divulgação científica, explicações, tutoriais e apresentações — a um custo de cerca de 1% do de ferramentas como o Seedance. Quem se <a href="https://chilltion.com/?ref=1y5k5k">cadastrar</a> agora ganha 1500 créditos.
     </td>
   </tr>
     <tr>
@@ -36,7 +40,7 @@
           </a>
         </td>
         <td width="75%" align="left" valign="middle">
-          ClawPower 是一家稳定可靠 AI 大模型中转服务商，提供 Claude、GPT、Gemini 60+ 大模型接入。无论是 OpenClaw、Hermes 智能体自动化场景，Claude Code、Codex 编程工具接入，还是公众号、小红书内容创作；都能获得稳定、顺滑、可长期使用的模型服务体验。低至官方价格的 30%，点击<a href="http://t.clawpower.vip/1005">免费领取 5 刀现金</a>体验券
+          A ClawPower é um provedor estável de acesso a modelos de IA, com mais de 60 modelos (Claude, GPT, Gemini). Serve tanto para automação com agentes (OpenClaw, Hermes) e ferramentas de programação (Claude Code, Codex) quanto para criar conteúdo. Custa a partir de 30% do preço oficial; clique para <a href="http://t.clawpower.vip/1005">receber 5 dólares de crédito</a> e testar.
         </td>
       </tr>
   <tr>
@@ -44,207 +48,207 @@
       <img src="static/wechat.png" alt="Sponsor Contact" width="150">
     </td>
     <td width="75%" align="left" valign="middle">
-      <strong>成为赞助商</strong><br>
-      如果您有意赞助本项目，请扫描左侧微信二维码（添加时请注明来意：<strong>赞助</strong>）。
+      <strong>Quer patrocinar?</strong><br>
+      Escaneie o QR code do WeChat ao lado (ao adicionar, escreva o motivo: <strong>patrocínio</strong>).
     </td>
   </tr>
 </table>
 
 ---
 
+## Índice
 
-## 目录
-
-- [💡 功能特性](#功能特性)
-- [💾 安装指南](#安装指南)
-- [🤖 AI Agent](#agent)
-- [🏁 快速开始](#快速开始)
-- [🗂️ 重构计划](#%EF%B8%8F重构计划)
-- [📣 近况说明](#近况说明)
-- [🐇 项目背景](#项目背景)
-- [📃 详细文档](#详细文档)
-- [🐾 交流与支持](#交流与支持)
-- [🤝 贡献指南](#贡献指南)
-- [📜 许可证](#许可证)
+- [💡 Recursos](#recursos)
+- [💾 Instalação](#instalação)
+- [🤖 Agentes de IA](#agentes-de-ia)
+- [🏁 Primeiros passos](#primeiros-passos)
+- [🗂️ Refatoração em andamento](#️refatoração-em-andamento)
+- [📣 Situação do projeto](#situação-do-projeto)
+- [🐇 De onde veio o projeto](#de-onde-veio-o-projeto)
+- [📃 Documentação](#documentação)
+- [🐾 Comunidade e apoio](#comunidade-e-apoio)
+- [🤝 Como contribuir](#como-contribuir)
+- [📜 Licença](#licença)
 - [⭐ Star History](#star-history)
 
-## 💡功能特性
+## 💡Recursos
 
-| 平台 | 登录/账号准备 | 视频上传 | 图文上传 | 定时发布 | CLI | Skill | 说明 |
+| Plataforma | Login | Vídeo | Imagem + texto | Agendamento | CLI | Skill | Observação |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 抖音 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 当前主线重构最完整 |
-| Bilibili | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | 运行时自动准备 `biliup` |
-| 小红书（浏览器版） | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 浏览器自动化，CLI/Skill 已接入 |
-| 快手 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 浏览器自动化，CLI/Skill 初版已接入 |
-| 视频号 | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ | 浏览器自动化，对应 `tencent_uploader` |
-| 百家号 | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | 浏览器自动化 |
-| 支付宝生活号 | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | 浏览器自动化，支持生活号视频 |
-| 微博 | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | 浏览器自动化，标题最多 30 字 |
-| 虎扑 | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | 浏览器自动化，标题 4–40 字 |
-| TikTok | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ | 当前示例走 Chrome 版实现 |
-| YouTube | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | 浏览器自动化（Studio），支持加入播放列表/可见性 |
+| Douyin | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | a mais completa na refatoração atual |
+| Bilibili | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | prepara o `biliup` sozinho |
+| Xiaohongshu (navegador) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | automação de navegador, com CLI e Skill |
+| Kuaishou | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | automação de navegador; CLI e Skill em versão inicial |
+| Canal do WeChat | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ | automação de navegador (`tencent_uploader`) |
+| Baijiahao | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | automação de navegador |
+| Alipay (conta de vida) | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | automação de navegador, com vídeo na conta de vida |
+| Weibo | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | automação de navegador; título de até 30 caracteres |
+| Hupu | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | automação de navegador; título de 4 a 40 caracteres |
+| TikTok | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ | o exemplo atual usa a versão Chrome |
+| YouTube | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | automação do Studio, com playlist e visibilidade |
 
-### AI这么强，为什么还需要这个项目
-在你使用AI的能力，browser agent等等，每次都让 agent 重新解析网页、截图理解, 临场判断
-该项目经过大量验证，上传这种 高频，重复，无聊的工作交给脚本和程序去执行
+> A **interface web** cobre só Xiaohongshu, Canal do WeChat, Douyin e Kuaishou. As outras plataformas — YouTube
+> inclusive — funcionam pela **linha de comando** (`sau youtube upload-video ...`).
 
+### Com a IA tão boa, por que este projeto?
 
-## 💾安装指南
+Um agente de navegador precisa reler a página, tirar print e decidir na hora, a cada execução.
+Este projeto já foi validado à exaustão: enviar vídeo é trabalho repetitivo e chato, e disso quem cuida melhor é um script.
 
-### 自己上手使用
-如果你只是普通用户，不准备借助 agent 客户端，直接看
+## 💾Instalação
 
-安装、更新、环境准备已经统一收敛到文档：
+### Instalando por conta própria
 
-- [安装说明](./docs/install.md)
-- [更新说明](./docs/update.md)
+Se você é um usuário comum e não vai usar um agente, veja a documentação, que reúne instalação, atualização e preparo do ambiente:
 
+- [Instalação](./docs/install.md)
+- [Atualização](./docs/update.md)
 
-### AGENT 
+### Agentes de IA
 
 ```
-AI的发展毋庸置疑，希望你遇到这种安装和使用，不要再怯场，而是交给各种AI Agent来协助你
+Não trave na hora de instalar e usar: entregue essa parte a um agente de IA.
 ```
 
-如果你准备把这个仓库直接交给 `OpenClaw`、`Codex`、`Claude Code` 来安装和使用
+Se quiser entregar o repositório direto ao `OpenClaw`, `Codex` ou `Claude Code`:
 
-先把仓库给 agent，再把这份启动提示词一起发给它：
+mande o repositório para o agente e, junto, este prompt inicial:
 
-- [Agent Bootstrap Prompt](./docs/agent-bootstrap.md)
+- [Prompt inicial para agentes](./docs/agent-bootstrap.md)
 
-这份提示词会引导 agent：
+Esse prompt orienta o agente a:
 
-- 优先按当前主线安装项目
-- 优先使用 `uv`、`sau` CLI 和 `skills/`
-- 先验证 `bilibili`、`douyin`、`kuaishou`、`xiaohongshu` 四个平台入口是否可用
+- instalar seguindo a linha principal do projeto
+- usar `uv`, a CLI `sau` e as `skills/`
+- conferir primeiro se `bilibili`, `douyin`, `kuaishou` e `xiaohongshu` estão funcionando
 
+### Mais links
 
-### 补充说明：
+- Uso da CLI: [documentação da CLI](./docs/CLI.md)
+- Para usar em `OpenClaw`, `Codex` ou `Claude Code`: [prompt inicial para agentes](./docs/agent-bootstrap.md)
+- Skill do Douyin: [Douyin Upload Skill](./skills/douyin-upload/SKILL.md)
+- Skill do Kuaishou: [Kuaishou Upload Skill](./skills/kuaishou-upload/SKILL.md)
+- Skill do Xiaohongshu: [Xiaohongshu Upload Skill](./skills/xiaohongshu-upload/SKILL.md)
+- Skill do Bilibili: [Bilibili Upload Skill](./skills/bilibili-upload/SKILL.md)
+- Versão web antiga: [documentação da web legada](./docs/legacy-web.md)
+- Outras skills, por plataforma e integradas, ainda estão em desenvolvimento
+- O `requirements.txt` existe por compatibilidade com o caminho antigo; quem está começando não precisa dele
 
-- CLI 使用请看：[CLI 使用说明](./docs/CLI.md)
-- 如果你准备在 `OpenClaw`、`Codex`、`Claude Code / cc` 里使用本项目，先看：[Agent Bootstrap Prompt](./docs/agent-bootstrap.md)
-- agent / skill 请看：[Douyin Upload Skill](./skills/douyin-upload/SKILL.md)
-- agent / skill 请看：[Kuaishou Upload Skill](./skills/kuaishou-upload/SKILL.md)
-- agent / skill 请看：[Xiaohongshu Upload Skill](./skills/xiaohongshu-upload/SKILL.md)
-- agent / skill 请看：[Bilibili Upload Skill](./skills/bilibili-upload/SKILL.md)
-- 历史 Web 说明请看：[历史 Web 版本说明](./docs/legacy-web.md)
-- 其他单平台 skill 与整合型 skill 仍在开发中
-- `requirements.txt` 目前主要用于历史兼容路径，普通用户不需要优先使用它
+## 📣Situação do projeto
 
+`24/03/2026`
 
-## 📣近况说明
+Andei focado em empreender, com projetos ainda no meio do caminho, e por um bom tempo não consegui dedicar a este repositório a atenção que ele merecia.
 
-`2026.03.24`
+O projeto passou de `9 mil estrelas` sem que eu percebesse, e a comunidade já tem mais de `2 mil` pessoas. Ver que ele ajuda de verdade me deixa feliz — obrigado pelo apoio e pelos retornos de sempre.
 
-最近我的重心一直都在创业上，而且手里还有一些项目没完全跑通，所以这个仓库前面有很长一段时间，我确实没有办法投入特别多精力去持续维护。
+Então resolvi parar um pouco e dedicar um tempo a uma refatoração caprichada.
 
-这个项目不知不觉已经 `9k+ star` 了，社群里也已经有 `2000+` 小伙伴了。看到它真的在持续帮到大家，我心里还是挺开心的，也是真的很感谢大家一直以来的支持、反馈。
+Nas próximas semanas o repositório deve entrar em uma fase de atualizações frequentes. O que mais quero fazer agora:
 
-所以我想，决定先停一下，抽一段时间出来，把这个项目好好重构和优化一轮。
+1. Usar uma automação mais discreta e estável, para reduzir o risco de detecção pelas plataformas
+2. Completar o envio de imagem + texto nas plataformas mais usadas, com CLI e Skill
+3. Publicar em mais lojas de skills, para fechar o último elo entre IA e redes sociais
 
-接下来这段时间，这个仓库应该会进入一个相对密集更新的阶段。我现在最想先做的事情主要有这几件：
+Se você achava que o projeto andava devagar, provavelmente vai ficar bem mais rápido. Fique de olho: vem um período de conserto, atualização e refatoração contínuos.
 
-1. 使用更隐蔽、更稳定的自动化方案，尽量降低平台检测风险
-2. 补齐一些常用平台的图文能力，并逐步完成 CLI 化、Skill 化
-3. 陆续测试并上架到更多 skill 平台，让大家的龙虾、螃蟹、毛毛虫都能打通 AI 自媒体的最后一道关
+## 🗂️Refatoração em andamento
 
-所以如果你之前觉得这个项目更新有点慢，哈哈哈，后面大概率会快很多。也欢迎大家继续关注，最近应该会是一段持续修、持续更、持续重构的阶段。
+O projeto passa por uma refatoração geral, com foco em:
 
-## 🗂️重构计划
+- padronizar a estrutura dos uploaders
+- unificar tudo na CLI
+- virar skill para OpenClaw, Codex, Claude Code e afins
+- trocar o driver para `patchright`, com mais compatibilidade e discrição
+- priorizar o modo sem janela
 
-项目正在进行一轮整体重构，当前重构重点是：
+"Modo sem janela" (headless) quer dizer que o navegador roda em segundo plano, sem abrir uma janela visível, mas a automação acontece do mesmo jeito. É o que serve para CLI, servidor, tarefas automáticas e agentes.
 
-- 各平台 uploader 的结构收敛
-- CLI 统一接入
-- 面向 OpenClaw、Codex、 Claude Code 等工具的 skill 化
-- 更换为 `patchright` 驱动，提升兼容性与隐蔽性
-- 主线优先围绕无头模式推进
+O código da versão web continua no repositório, mas não é mais a linha principal: não há garantia de que rode direto nem de que esteja sincronizado com o uploader/CLI atuais.
 
-“无头模式（headless）”，指的是浏览器在后台运行，不弹出可见窗口，但自动化流程仍然会照常执行。这样更适合 CLI、服务端、自动任务和 agent 场景。
+## 🏁Primeiros passos
 
-Web 端相关代码仍然保留，但已经不是当前主线，不保证可直接运行，也不保证与当前 uploader/CLI 完全同步。
+### Opção 1: pela CLI
 
-
-## 🏁快速开始
-
-### 方式 1：使用 CLI
-
-当前抖音、快手、小红书、Bilibili、视频号、百家号、支付宝生活号、微博和虎扑已经接入 CLI：
+Douyin, Kuaishou, Xiaohongshu, Bilibili, Canal do WeChat, Baijiahao, Alipay, Weibo e Hupu já estão na CLI:
 
 ```bash
-sau douyin login --account <account_name>
-sau douyin check --account <account_name>
-sau douyin upload-video --account <account_name> --file videos/demo.mp4 --title "示例标题" --desc "示例简介"
-sau douyin upload-note --account <account_name> --images videos/1.png videos/2.png --title "图文标题" --note "图文正文"
+sau douyin login --account <nome_da_conta>
+sau douyin check --account <nome_da_conta>
+sau douyin upload-video --account <nome_da_conta> --file videos/demo.mp4 --title "Título de exemplo" --desc "Descrição de exemplo"
+sau douyin upload-note --account <nome_da_conta> --images videos/1.png videos/2.png --title "Título do post" --note "Texto do post"
 
-sau kuaishou login --account <account_name>
-sau kuaishou check --account <account_name>
-sau kuaishou upload-video --account <account_name> --file videos/demo.mp4 --title "示例标题" --desc "示例简介"
-sau kuaishou upload-note --account <account_name> --images videos/1.png videos/2.png videos/3.png --title "图文标题" --note "图文正文"
+sau kuaishou login --account <nome_da_conta>
+sau kuaishou check --account <nome_da_conta>
+sau kuaishou upload-video --account <nome_da_conta> --file videos/demo.mp4 --title "Título de exemplo" --desc "Descrição de exemplo"
+sau kuaishou upload-note --account <nome_da_conta> --images videos/1.png videos/2.png videos/3.png --title "Título do post" --note "Texto do post"
 
-sau xiaohongshu login --account <account_name>
-sau xiaohongshu check --account <account_name>
-sau xiaohongshu upload-video --account <account_name> --file videos/demo.mp4 --title "示例标题" --desc "示例简介"
-sau xiaohongshu upload-note --account <account_name> --images videos/1.png videos/2.png videos/3.png --title "图文标题" --note "图文正文"
+sau xiaohongshu login --account <nome_da_conta>
+sau xiaohongshu check --account <nome_da_conta>
+sau xiaohongshu upload-video --account <nome_da_conta> --file videos/demo.mp4 --title "Título de exemplo" --desc "Descrição de exemplo"
+sau xiaohongshu upload-note --account <nome_da_conta> --images videos/1.png videos/2.png videos/3.png --title "Título do post" --note "Texto do post"
 
-sau bilibili login --account <account_name>
-sau bilibili check --account <account_name>
-sau bilibili upload-video --account <account_name> --file videos/demo.mp4 --title "示例标题" --desc "示例简介" --tid 249
+sau bilibili login --account <nome_da_conta>
+sau bilibili check --account <nome_da_conta>
+sau bilibili upload-video --account <nome_da_conta> --file videos/demo.mp4 --title "Título de exemplo" --desc "Descrição de exemplo" --tid 249
 
-sau tencent login --account <account_name>
-sau tencent check --account <account_name>
-sau tencent upload-video --account <account_name> --file videos/demo.mp4 --title "示例标题" --desc "示例简介" --tags tag1,tag2
+sau tencent login --account <nome_da_conta>
+sau tencent check --account <nome_da_conta>
+sau tencent upload-video --account <nome_da_conta> --file videos/demo.mp4 --title "Título de exemplo" --desc "Descrição de exemplo" --tags tag1,tag2
 
-sau baijiahao login --account <account_name>
-sau baijiahao check --account <account_name>
-sau baijiahao upload-video --account <account_name> --file videos/demo.mp4 --title "示例标题" --desc "示例简介" --tags tag1,tag2
+sau baijiahao login --account <nome_da_conta>
+sau baijiahao check --account <nome_da_conta>
+sau baijiahao upload-video --account <nome_da_conta> --file videos/demo.mp4 --title "Título de exemplo" --desc "Descrição de exemplo" --tags tag1,tag2
 
-sau alipay login --account <account_name>
-sau alipay check --account <account_name>
-sau alipay upload-video --account <account_name> --file videos/demo.mp4 --title "示例标题" --desc "示例简介" --tags tag1,tag2
+sau alipay login --account <nome_da_conta>
+sau alipay check --account <nome_da_conta>
+sau alipay upload-video --account <nome_da_conta> --file videos/demo.mp4 --title "Título de exemplo" --desc "Descrição de exemplo" --tags tag1,tag2
 
-sau weibo login --account <account_name>
-sau weibo check --account <account_name>
-sau weibo upload-video --account <account_name> --file videos/demo.mp4 --title "示例标题" --desc "示例简介" --tags tag1,tag2
+sau weibo login --account <nome_da_conta>
+sau weibo check --account <nome_da_conta>
+sau weibo upload-video --account <nome_da_conta> --file videos/demo.mp4 --title "Título de exemplo" --desc "Descrição de exemplo" --tags tag1,tag2
 
-sau hupu login --account <account_name>
-sau hupu check --account <account_name>
-sau hupu upload-video --account <account_name> --file videos/demo.mp4 --title "示例标题" --desc "示例简介" --tags tag1,tag2
+sau hupu login --account <nome_da_conta>
+sau hupu check --account <nome_da_conta>
+sau hupu upload-video --account <nome_da_conta> --file videos/demo.mp4 --title "Título de exemplo" --desc "Descrição de exemplo" --tags tag1,tag2
 
-sau youtube login --account <account_name>
-sau youtube check --account <account_name>
-sau youtube upload-video --account <account_name> --file videos/demo.mp4 --title "示例标题" --desc "示例简介" --tags tag1,tag2 --playlist "我的系列" --visibility public
+sau youtube login --account <nome_da_conta>
+sau youtube check --account <nome_da_conta>
+sau youtube upload-video --account <nome_da_conta> --file videos/demo.mp4 --title "Título de exemplo" --desc "Descrição de exemplo" --tags tag1,tag2 --playlist "Minha série" --visibility public
 ```
 
-> YouTube 说明：登录是交互式的（Google 账号，浏览器里完成，无二维码）。这里走浏览器自动化而不是官方 API，
-> 是因为**未通过 Google 合规审核的 API 项目上传的视频会被强制锁为私享、无法改公开**，对个人/单频道不实用；
-> 浏览器自动化没有此限制，可直接发布公开视频，也与本项目其它平台的 cookie 方案一致。
-> `--playlist` 适合连载/系列追更；`--visibility` 可选 `public`/`unlisted`/`private`。
-> 上传会**等进度到 100% 再点发布**（浏览器上传靠窗口开着传，传一半就发布会被掐断卡在中途）。
-> youtube.com 被墙的地区：在 `conf.py` 设 `YT_PROXY = "http://127.0.0.1:7890"`（chromium 不吃系统代理，需显式指定）。
+> Sobre o YouTube: o login é interativo (conta Google, feito no navegador, sem QR code). Aqui é automação de
+> navegador em vez da API oficial porque **vídeo enviado por um projeto de API que não passou pela revisão do
+> Google fica travado como privado e não dá para tornar público** — inútil para quem tem um canal só.
+> A automação de navegador não tem essa limitação: publica direto em público e segue o mesmo esquema de cookies
+> das outras plataformas do projeto.
+> O `--playlist` serve para séries; o `--visibility` aceita `public`, `unlisted` ou `private`.
+> O envio **espera chegar a 100% antes de publicar** (o upload depende da janela aberta; publicar no meio corta a transferência).
+> Em regiões onde o youtube.com é bloqueado: defina `YT_PROXY = "http://127.0.0.1:7890"` no `conf.py` (o chromium
+> ignora o proxy do sistema, precisa ser explícito).
 
-补充说明：
+Observações:
 
-- `creator` 之类的名字只是示例值，真正含义是 `account_name`
-- 一个 `account_name` 对应一个账号文件，可以准备多个账号，也可以按账号名并发执行任务
-- 抖音视频发布若触发短信二次验证，程序会优先读取项目根目录下的 `verify_code.txt`；如果你是在本地交互式终端手动运行 CLI，也可以直接按终端提示输入验证码
-- 浏览器平台统一约定：
-- 视频使用 `title + desc + tags`
-- 图文使用 `title + note + tags`
-- Bilibili CLI 不要求用户手动安装 `biliup`
-- 首次运行相关命令时，程序会自动下载 `biliup`
-- 后续运行会自动检查上游 release 并更新
-- Bilibili 登录建议由用户自己在本地真实终端里执行；如果终端二维码显示不完整，可以直接打开当前目录下的 `qrcode.png` 扫码
+- nomes como `creator` são só exemplos; o que vale é o `account_name`
+- cada `account_name` tem um arquivo de conta próprio: dá para ter várias contas e rodar tarefas em paralelo por nome
+- se a publicação no Douyin pedir verificação por SMS, o programa lê antes o arquivo `verify_code.txt` na raiz do projeto; rodando a CLI num terminal interativo, também dá para digitar o código no próprio terminal
+- nas plataformas por navegador vale sempre a mesma convenção:
+- vídeo usa `title + desc + tags`
+- imagem + texto usa `title + note + tags`
+- a CLI do Bilibili não exige instalar o `biliup` à mão
+- na primeira execução o programa baixa o `biliup` sozinho
+- nas seguintes, confere a release mais nova e atualiza
+- o login do Bilibili é melhor feito no seu terminal de verdade; se o QR code sair cortado, abra o `qrcode.png` na pasta atual e escaneie por lá
 
-### 方式 2：使用 examples
+### Opção 2: pelos exemplos
 
-`examples/` 目录里同时存在两类脚本：
+Em `examples/` há dois tipos de script:
 
-- 当前主线 CLI 包装示例
-- 历史直连 uploader 示例
+- exemplos que chamam a CLI atual
+- exemplos antigos que falam direto com o uploader
 
-对抖音、快手、小红书、Bilibili 来说，当前主线优先使用上面的 `sau ...` CLI。
-下面这些脚本主要是历史直连 uploader 示例或调试入口：
+Para Douyin, Kuaishou, Xiaohongshu e Bilibili, prefira os comandos `sau ...` acima.
+Os scripts abaixo são os exemplos diretos (ou pontos de depuração):
 
 - `examples/upload_to_douyin.py`
 - `examples/upload_video_to_bilibili.py`
@@ -256,97 +260,90 @@ sau youtube upload-video --account <account_name> --file videos/demo.mp4 --title
 - `examples/upload_video_to_tiktok.py`
 - `examples/upload_video_to_xiaohongshu.py`
 
-## 🐇项目背景
+## 🐇De onde veio o projeto
 
-该项目最初是我个人用于自动化管理社交媒体视频发布的工具。我的主要发布策略是提前一天设置定时发布，因此项目中很多定时发布相关的逻辑是基于“第二天”的时间进行计算的。
+No começo era uma ferramenta pessoal para automatizar as minhas publicações. Como eu costumava agendar sempre para o dia seguinte, boa parte da lógica de agendamento calcula os horários a partir de "amanhã".
 
-如果您需要立即发布或其他定制化的发布策略，欢迎研究源码或在社区提问。
+Se você precisa publicar na hora ou seguir outra estratégia, dá uma olhada no código ou pergunte na comunidade.
 
-## 📃详细文档
+## 📃Documentação
 
-已落后，目前在快速重构该项目，当下，你需要做的是把这个仓库，发给你的AI agent：qwen code，codex cc，openclaw等等，让他们帮你安装和使用
+A documentação está atrasada em relação ao código, que passa por uma refatoração rápida. O caminho mais fácil hoje é entregar o repositório ao seu agente de IA (qwen code, codex, cc, openclaw e afins) e deixar que ele instale e use.
 
-更详细的文档和说明，请查看：[social-auto-upload 官方文档](https://sap-doc.nasdaddy.com/)
+Documentação completa: [documentação oficial do social-auto-upload](https://sap-doc.nasdaddy.com/)
 
-## 🐾交流与支持
+## 🐾Comunidade e apoio
 
-[☕ Donate as u like](https://www.buymeacoffee.com/hysn2001m) - 如果您觉得这个项目对您有帮助，可以考虑赞助。
+[☕ Donate as u like](https://www.buymeacoffee.com/hysn2001m) — se o projeto te ajudou, considere apoiar.
 
-如果您也是独立开发者、技术爱好者，对 #技术变现 #AI创业 #跨境电商 #自动化工具 #视频创作 等话题感兴趣，欢迎加入社群交流。
+Se você também é desenvolvedor independente ou entusiasta e curte os assuntos #monetização #startups de IA #comércio internacional #automação #criação de vídeo, entra na comunidade.
 
-### Creator
+### Criador
 
 <table>
     <td align="center">
         <a href="https://sap-doc.nasdaddy.com/">
-            <img src="media/mp.jpg" width="200px" alt="NasDaddy公众号"/>
+            <img src="media/mp.jpg" width="200px" alt="conta oficial NasDaddy"/>
             <br />
-            <sub><b>微信公众号</b></sub>
+            <sub><b>Conta oficial no WeChat</b></sub>
         </a>
         <br />
         <a href="https://github.com/dreammis/social-auto-upload/commits?author=dreammis" title="Code">💻</a>
         <br />
-        关注公众号，后台回复 `上传` 获取加群方式
+        Siga a conta e responda `上传` (literalmente "upload") para receber o convite do grupo
     </td>
     <td align="center">
         <a href="https://sap-doc.nasdaddy.com/">
-            <img src="media/QR.png" width="200px" alt="赞赏码/入群引导"/>
+            <img src="media/QR.png" width="200px" alt="QR de apoio e entrada no grupo"/>
             <br />
-            <sub><b>交流群 (通过公众号获取)</b></sub>
+            <sub><b>Grupo da comunidade (pela conta oficial)</b></sub>
         </a>
         <br />
         <a href="https://sap-doc.nasdaddy.com/" title="Documentation">📖</a>
         <br />
-        如果您觉得项目有用，可以考虑打赏支持一下
+        Se o projeto te serviu, considere apoiar
     </td>
 </table>
 
+## 🤝Como contribuir
 
+Toda contribuição é bem-vinda, entre elas:
 
+- abrir relatos de bug e pedidos de recurso
+- melhorar código e documentação
+- compartilhar experiências e tutoriais
 
-## 🤝贡献指南
+Para contribuir com código:
 
-欢迎各种形式的贡献，包括但不限于：
+1. Faça um fork do repositório.
+2. Crie uma branch (`git checkout -b feature/SuaFeature` ou `bugfix/SeuBugfix`).
+3. Faça o commit (`git commit -m 'Add some feature'`).
+4. Envie a branch (`git push origin feature/SuaFeature`).
+5. Abra um Pull Request.
 
--   提交 Bug报告 和 Feature请求。
--   改进代码、文档。
--   分享使用经验和教程。
+Antes de enviar código ou documentação, confirme que você tem o direito de fazê-lo e concorda em publicar sob a licença MIT deste projeto. Ao enviar código de terceiros, diga de onde veio e sob qual licença.
 
-如果您希望贡献代码，请遵循以下步骤：
-
-1.  Fork 本仓库。
-2.  创建一个新的分支 (`git checkout -b feature/YourFeature` 或 `bugfix/YourBugfix`)。
-3.  提交您的更改 (`git commit -m 'Add some feature'`)。
-4.  Push到您的分支 (`git push origin feature/YourFeature`)。
-5.  创建一个 Pull Request。
-
-提交代码或文档前，请确认您有权提交相关内容，并同意这些贡献按照本项目的 MIT License 发布。提交第三方代码时，请同时说明来源及其适用的许可证。
-
-## 主要贡献者
+## Principais contribuidores
 
 <a href="https://github.com/dreammis/social-auto-upload/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=dreammis/social-auto-upload" />
 </a>
 
+## 🙏Agradecimentos
 
-## 🙏致谢
-
-本项目的 Bilibili 上传能力基于开源项目 `biliup` 的能力进行接入与封装。
-感谢 `biliup` 项目及其贡献者提供的基础能力：
+O envio para o Bilibili é feito em cima do projeto `biliup`.
+Obrigado ao `biliup` e a quem contribui com ele:
 
 - https://github.com/biliup/biliup
 
-本项目依赖的第三方组件和运行时工具仍受其各自许可证约束。下游发行或集成本项目时，请同时检查并保留相关第三方组件要求的版权、许可证和 NOTICE 声明。
+Os componentes de terceiros usados aqui continuam sob as licenças deles. Ao redistribuir ou integrar este projeto, confira e preserve os avisos de direito autoral, licença e NOTICE exigidos por esses componentes.
 
-## 📜许可证
+## 📜Licença
 
-本项目采用 [MIT License](LICENSE) 开源许可证。除第三方组件外，本项目代码可以在遵守该许可证条款的前提下用于商业软件，包括闭源软件。
+Este projeto usa a [licença MIT](LICENSE). Fora os componentes de terceiros, o código pode ser usado em software comercial, inclusive fechado, desde que os termos da licença sejam respeitados.
 
 ## ⭐Star-History
 
-> 如果这个项目对您有帮助，请给一个 ⭐ Star 以表示支持！
-
-
-
+> Se o projeto te ajudou, deixa uma ⭐!
 
 [![Star History Chart](https://star-history.dera.page/svg?repos=dreammis/social-auto-upload&type=Date)](https://star-history.dera.page/#dreammis/social-auto-upload&Date)

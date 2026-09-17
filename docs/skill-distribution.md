@@ -1,272 +1,272 @@
-# Skill 分发与发布说明
+# Distribuição e publicação das skills
 
-这份文档是给 `social-auto-upload` 后续做独立 skill 分发时用的。
+Este documento serve para quando o `social-auto-upload` for distribuir skills de forma independente.
 
-当前仓库已经具备两层能力：
+O repositório hoje tem duas camadas:
 
-- 一个可安装的 CLI：`sau`
-- 一个可被安装到 Codex 的内置 skill：`douyin-cli`
+- uma CLI instalável: `sau`
+- uma skill embutida, instalável no Codex: `douyin-cli`
 
-后续当主流程和 bug 修复完成后，可以再继续做 PyPI 发布、安装优化、以及更多平台的独立 skill。
+Depois que o fluxo principal e as correções estiverem prontos, dá para seguir para a publicação no PyPI, melhorar a instalação e criar skills independentes para mais plataformas.
 
-## 先说结论
+## Conclusão primeiro
 
-`skill` 不一定必须是一个 Python 包。
+Uma `skill` não precisa ser um pacote Python.
 
-它可以是：
+Ela pode ser:
 
-- 一个 skill 目录
-- 一个独立仓库
-- 一个安装器脚本
-- 一个 Docker 镜像
-- 一个包管理器可安装的分发物
+- uma pasta de skill
+- um repositório próprio
+- um script instalador
+- uma imagem Docker
+- qualquer artefato instalável por um gerenciador de pacotes
 
-但从“别人最快安装和使用”的角度看，最常见、最省事的仍然是：
+Mas, pensando em "como o outro instala e usa mais rápido", o caminho mais comum continua sendo:
 
-1. 用一个安装包分发真正的运行能力
-2. 用一个 skill 安装动作把 skill 放到 AI 工具的技能目录
+1. distribuir a capacidade real num pacote instalável
+2. usar uma ação de instalação para colocar a skill na pasta de skills da ferramenta de IA
 
-对这个项目来说，最推荐的形式是：
+Para este projeto, a forma recomendada é:
 
-- Python 包负责提供 `sau` 命令
-- `sau skill install` 负责把 skill 安装到 `~/.codex/skills/`
+- o pacote Python fornece o comando `sau`
+- o `sau skill install` coloca a skill em `~/.codex/skills/`
 
-也就是：
+Ou seja:
 
 ```bash
 pip install social-auto-upload
 sau skill install
 ```
 
-## skill 一定要是包吗
+## A skill precisa ser um pacote?
 
-不是。
+Não.
 
-### 1. skill 只是一个目录
+### 1. A skill é só uma pasta
 
-这是最原始也最常见的形式。
+É a forma mais simples e mais comum.
 
-通常内容是：
+Em geral contém:
 
 - `SKILL.md`
 - `agents/openai.yaml`
 - `references/`
 - `scripts/`
 
-这种形式本身已经是一个可用 skill 了，不一定需要打包。
+Assim já é uma skill utilizável, sem precisar de empacotamento.
 
-问题在于：
+O problema:
 
-- 用户要知道把它复制到哪里
-- 用户要手动安装
-- skill 如果依赖额外脚本或运行时，安装体验会比较差
+- o usuário precisa saber para onde copiar
+- a instalação é manual
+- se a skill depende de scripts ou de um runtime, instalar fica chato
 
-适合：
+Serve bem para:
 
-- 内部团队
-- 仓库内开发规范
-- 还在快速迭代的 skill
+- times internos
+- convenções de desenvolvimento dentro do repositório
+- skills que ainda mudam muito
 
-### 2. skill 是一个独立仓库
+### 2. A skill é um repositório próprio
 
-这也完全成立。
+Também funciona.
 
-例如：
+Por exemplo:
 
-- 一个仓库专门放 `SKILL.md`
-- 附带 `scripts/install.py`
-- 或者 README 教用户复制到 `~/.codex/skills/`
+- um repositório só com o `SKILL.md`
+- com um `scripts/install.py`
+- ou com um README explicando como copiar para `~/.codex/skills/`
 
-这种模式的优点是：
+Vantagens:
 
-- skill 自己独立版本管理
-- 不依赖主业务仓库
-- 可以公开发布
+- a skill tem versionamento próprio
+- não depende do repositório principal
+- pode ser publicada separadamente
 
-缺点是：
+Desvantagens:
 
-- 用户还是可能要 clone
-- 或者还需要执行安装脚本
+- o usuário provavelmente ainda precisa clonar
+- ou rodar um script de instalação
 
-适合：
+Serve bem quando:
 
-- 想把 skill 当产品独立维护
-- skill 和业务代码已经明显拆开
+- a skill é mantida como produto à parte
+- a skill e o código de negócio já estão bem separados
 
-### 3. skill 跟随一个包分发
+### 3. A skill viaja junto com um pacote
 
-这是当前这个项目最适合的方向。
+É o caminho que mais combina com este projeto.
 
-思路是：
+A ideia:
 
-- Python 包里内置一份 skill 资源
-- 安装包后即可执行 `sau skill install`
-- CLI 和 skill 一起发版
+- o pacote Python leva a skill dentro dele
+- depois de instalar, basta rodar `sau skill install`
+- CLI e skill são lançadas juntas
 
-优点是：
+Vantagens:
 
-- 用户体验最好
-- skill 和实际命令保持一致
-- 版本对应关系清晰
-- 不需要用户 clone 仓库
+- melhor experiência para o usuário
+- a skill fica alinhada com o comando de verdade
+- a correspondência de versões fica clara
+- ninguém precisa clonar o repositório
 
-适合：
+Serve bem quando:
 
-- skill 背后有真实 CLI/SDK/工具
-- 用户最终是要“使用能力”而不只是“阅读说明”
+- existe uma CLI, SDK ou ferramenta real por trás da skill
+- o usuário quer usar a capacidade, não apenas ler a documentação
 
-### 4. skill 用 Docker 交付
+### 4. A skill é entregue por Docker
 
-也可以。
+Também dá.
 
-常见方式是：
+O jeito comum:
 
-- Docker 里装好运行环境
-- skill 告诉 AI 通过 `docker run ...` 去执行命令
+- o Docker já traz o ambiente pronto
+- a skill diz à IA para executar via `docker run ...`
 
-优点是：
+Vantagens:
 
-- 环境一致性很好
-- 本地依赖复杂时特别有用
+- ambiente muito consistente
+- ótimo quando as dependências locais são complicadas
 
-缺点是：
+Desvantagens:
 
-- 用户必须先装 Docker
-- 浏览器自动化、桌面登录、cookie、本地文件挂载都会更复杂
-- 对抖音这种需要本地浏览器交互的流程不一定更友好
+- o usuário precisa instalar o Docker
+- automação de navegador, login na área de trabalho, cookies e arquivos locais ficam mais complicados
+- para um fluxo como o do Douyin, que precisa do navegador local, não é necessariamente melhor
 
-对当前项目来说，Docker 更适合：
+Neste projeto, o Docker cai melhor em:
 
-- 后端服务
-- 批处理任务
-- 服务器环境
+- serviços de backend
+- tarefas em lote
+- ambiente de servidor
 
-不太适合作为“普通用户首次使用抖音登录 skill”的唯一交付方式。
+Não é a melhor entrega única para quem vai fazer o primeiro login no Douyin.
 
-## AI 安装环境、启动脚本、仓库，这些算不算 skill
+## Ambiente de instalação, script de partida, repositório — tudo isso é skill?
 
-算，但要区分“skill 本体”和“skill 的安装/运行载体”。
+É, mas vale separar a "skill em si" do "meio de instalação e execução".
 
-可以这样理解：
+Dá para pensar assim:
 
-- `SKILL.md` 是 skill 本体
-- 仓库、包、Docker、安装脚本，是 skill 的分发和运行载体
+- o `SKILL.md` é a skill em si
+- repositório, pacote, Docker e script de instalação são meios de distribuição e execução
 
-所以：
+Então:
 
-- skill 可以住在仓库里
-- skill 可以被包一起带出去
-- skill 也可以借助 Docker 运行它依赖的环境
+- a skill pode morar num repositório
+- a skill pode viajar dentro de um pacote
+- a skill pode usar Docker para o ambiente de que depende
 
-只要最终用户能：
+Se no fim o usuário consegue:
 
-1. 安装它
-2. 让 AI 发现它
-3. 真正调用它依赖的能力
+1. instalar
+2. fazer a IA descobrir a skill
+3. usar de verdade a capacidade por trás dela
 
-那它就是成立的。
+então está de pé.
 
-## 对这个项目最合适的方案
+## O que faz mais sentido para este projeto
 
-### 当前推荐方案
+### Recomendação atual
 
-第一阶段：
+Primeira fase:
 
-- 继续在这个仓库里修主流程和 bug
-- 保持 `sau` 命令稳定
-- 保持包内 skill 与 CLI 契约一致
+- continuar corrigindo o fluxo principal e os bugs neste repositório
+- manter o comando `sau` estável
+- manter a skill embutida alinhada com o contrato da CLI
 
-第二阶段：
+Segunda fase:
 
-- 打包并发布到 PyPI
-- 用户通过 `pip install social-auto-upload` 安装
-- 用户执行 `sau skill install`
+- empacotar e publicar no PyPI
+- o usuário instala com `pip install social-auto-upload`
+- o usuário roda `sau skill install`
 
-第三阶段：
+Terceira fase:
 
-- 根据需要把更多平台拆成独立 skill
-- 例如 `douyin-cli`、`tencent-cli`、`tiktok-cli`
+- separar mais plataformas em skills próprias, conforme a necessidade
+- por exemplo, `douyin-cli`, `tencent-cli`, `tiktok-cli`
 
-### 为什么现在不优先做“独立 skill 仓库”
+### Por que não começar pelo repositório de skill separado
 
-因为当前最核心的问题还不是“skill 放哪”，而是：
+Porque o problema central agora não é onde a skill mora, e sim:
 
-- 上传流程是否稳定
-- CLI 契约是否稳定
-- 实际用户安装后能不能跑通
+- se o fluxo de envio está estável
+- se o contrato da CLI está estável
+- se o usuário consegue rodar tudo depois de instalar
 
-在这些都还在收敛的阶段，先让 skill 随包分发是最稳妥的。
+Enquanto isso não fecha, distribuir a skill junto com o pacote é o caminho mais seguro.
 
-## 未来可选的三种正式发布路线
+## Três rotas possíveis de publicação
 
-### 路线 A：PyPI 包 + 包内 skill
+### Rota A: pacote no PyPI + skill dentro dele
 
-用户安装：
+O usuário instala:
 
 ```bash
 pip install social-auto-upload
 sau skill install
 ```
 
-优点：
+Vantagens:
 
-- 最容易传播
-- 安装简单
-- 版本管理清晰
+- é o mais fácil de divulgar
+- instalação simples
+- versionamento claro
 
-这是当前首选路线。
+É a rota preferida hoje.
 
-### 路线 B：独立 skill 仓库 + PyPI 包
+### Rota B: repositório de skill próprio + pacote no PyPI
 
-用户安装能力：
+O usuário instala a capacidade:
 
 ```bash
 pip install social-auto-upload
 ```
 
-用户安装 skill：
+E instala a skill:
 
-- clone skill 仓库
-- 或跑 skill 仓库提供的安装脚本
+- clonando o repositório da skill
+- ou rodando o instalador que ela oferece
 
-优点：
+Vantagens:
 
-- skill 可以单独演进
-- 可以给不同 AI 工具维护不同 metadata
+- a skill evolui sozinha
+- dá para manter metadados diferentes por ferramenta de IA
 
-缺点：
+Desvantagem:
 
-- 安装链路更长
+- a instalação fica mais longa
 
-### 路线 C：Docker + skill
+### Rota C: Docker + skill
 
-用户：
+O usuário:
 
-- 安装 Docker
-- 拉镜像
-- 安装 skill
-- skill 内部调用 docker 命令
+- instala o Docker
+- baixa a imagem
+- instala a skill
+- a skill chama comandos docker por dentro
 
-优点：
+Vantagem:
 
-- 依赖环境最稳定
+- ambiente mais estável
 
-缺点：
+Desvantagem:
 
-- 对本地浏览器自动化和交互式登录不够友好
+- ruim para automação de navegador e login interativo
 
-更适合服务端任务，不是当前首选。
+Combina mais com tarefas de servidor; não é a escolha atual.
 
-## 当前项目的发布建议
+## Sugestão de publicação
 
-当主流程稳定后，建议按这个顺序走：
+Quando o fluxo principal estiver estável, siga esta ordem:
 
-1. 先保证 `sau douyin login/check/upload` 真机可用
-2. 验证 `sau skill install` 安装后的 skill 可以被 Codex 正常识别
-3. 本地打 wheel 做一次冷启动安装测试
-4. 再发布 PyPI
+1. garanta que `sau douyin login/check/upload` funciona numa máquina real
+2. confirme que a skill instalada por `sau skill install` é reconhecida pelo Codex
+3. gere um wheel local e faça um teste de instalação do zero
+4. só então publique no PyPI
 
-建议的最终用户路径是：
+O caminho sugerido para o usuário final:
 
 ```bash
 pip install social-auto-upload
@@ -275,12 +275,12 @@ sau skill install
 sau douyin login --account my-account
 ```
 
-## 一句话回答
+## Resumindo numa frase
 
-`skill` 不是必须做成包，但如果你想让别人“最快安装、最少理解成本、最少手工操作”，那就最好让“运行能力”走包分发，让 `skill` 跟着包一起被安装。
+Uma `skill` não precisa virar pacote, mas se você quer que os outros instalem rápido, entendam pouco e façam o mínimo à mão, é melhor distribuir a capacidade num pacote e deixar a `skill` ser instalada junto.
 
-对这个项目来说，最佳落地方案不是“只发一个 skill 仓库”，而是：
+Para este projeto, a melhor forma não é publicar só um repositório de skill, e sim:
 
-- `social-auto-upload` 作为可安装包
-- `douyin-cli` 作为包内 skill
-- `sau skill install` 作为安装桥梁
+- `social-auto-upload` como pacote instalável
+- `douyin-cli` como skill embutida
+- `sau skill install` como ponte de instalação

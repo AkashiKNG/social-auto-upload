@@ -1,9 +1,9 @@
 """
-当前主线优先使用 CLI：
+O caminho atual é a CLI:
 
     sau xiaohongshu login --account <account_name>
 
-这个脚本保留为小红书 uploader 的调试入口 / 历史直连路径。
+Este script fica como entrada de depuração do uploader do Xiaohongshu, um caminho histórico.
 """
 
 import asyncio

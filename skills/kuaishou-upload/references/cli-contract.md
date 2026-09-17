@@ -1,37 +1,37 @@
-# 快手 CLI 契约
+# Contrato da CLI do Kuaishou
 
-这个 skill 默认假设当前环境已经安装并可调用 `sau` 命令。
+Esta skill parte do princípio de que o comando `sau` já está instalado e disponível.
 
-## 命令列表
+## Lista de comandos
 
-### 登录
+### Entrar na conta
 
 ```bash
 sau kuaishou login --account <account>
 ```
 
-- 必填参数:
+- Obrigatório:
   - `--account`
-- 作用:
-  - 启动快手登录流程，为指定账号生成或刷新 cookie 文件
-  - 如果登录过程中生成本地二维码图片，agent 应优先直接把图片展示/发送给用户扫码，而不是只回传路径
-- 账号说明:
-  - `--account` 传的是用户自定义的 `account_name`，不是固定只能叫 `creator`
-  - 一个 `account_name` 对应一个账号文件，可用于多账号隔离和并发任务
+- O que faz:
+  - inicia o login no Kuaishou e gera ou renova o arquivo de cookie da conta
+  - se o login gerar uma imagem de QR code, mostre ou envie a imagem ao usuário em vez de devolver só o caminho
+- Sobre a conta:
+  - o `--account` recebe o `account_name` escolhido pelo usuário; não precisa se chamar `creator`
+  - cada `account_name` corresponde a um arquivo de conta, o que permite várias contas e tarefas em paralelo
 
-### 校验 cookie
+### Validar o cookie
 
 ```bash
 sau kuaishou check --account <account>
 ```
 
-- 必填参数:
+- Obrigatório:
   - `--account`
-- 预期输出:
-  - `valid`：cookie 可用
-  - `invalid`：cookie 缺失或已失效
+- Saída esperada:
+  - `valid`: o cookie serve
+  - `invalid`: o cookie sumiu ou expirou
 
-### 上传视频
+### Enviar vídeo
 
 ```bash
 sau kuaishou upload-video \
@@ -46,11 +46,11 @@ sau kuaishou upload-video \
   [--headless | --headed]
 ```
 
-- 必填参数:
+- Obrigatório:
   - `--account`
   - `--file`
   - `--title`
-- 可选参数:
+- Opcional:
   - `--desc`
   - `--tags`
   - `--schedule`
@@ -59,7 +59,7 @@ sau kuaishou upload-video \
   - `--headless`
   - `--headed`
 
-### 上传图文
+### Enviar post de imagens
 
 ```bash
 sau kuaishou upload-note \
@@ -73,11 +73,11 @@ sau kuaishou upload-note \
   [--headless | --headed]
 ```
 
-- 必填参数:
+- Obrigatório:
   - `--account`
   - `--images`
   - `--title`
-- 可选参数:
+- Opcional:
   - `--note`
   - `--tags`
   - `--schedule`
@@ -85,20 +85,20 @@ sau kuaishou upload-note \
   - `--headless`
   - `--headed`
 
-## 发布策略
+## Estratégia de publicação
 
-- 如果不传 `--schedule`，CLI 使用立即发布
-- 如果传了 `--schedule`，CLI 自动切换为定时发布
-- 时间格式为:
+- Sem `--schedule`, a CLI publica na hora
+- Com `--schedule`, a CLI muda para publicação agendada
+- O formato de data e hora é:
 
 ```text
 YYYY-MM-DD HH:MM
 ```
 
-## 额外说明
+## Observações
 
-- `upload-video` 每次命令只支持一个视频文件
-- `upload-note` 每次命令支持多张图片
-- 视频描述字段统一使用 `--desc`
-- 图文正文统一使用 `--note`
-- `upload-note` 当前要求传入真实的多张图片文件，而不是同一路径重复多次
+- cada `upload-video` aceita um único arquivo de vídeo
+- cada `upload-note` aceita várias imagens
+- a descrição do vídeo é sempre o `--desc`
+- o texto do post é sempre o `--note`
+- o `upload-note` exige arquivos de imagem realmente diferentes, não o mesmo caminho repetido

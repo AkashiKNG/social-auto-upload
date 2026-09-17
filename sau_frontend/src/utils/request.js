@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
-// 创建axios实例
+// cria a instância do axios
 const request = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5409',
   headers: {
@@ -9,10 +9,10 @@ const request = axios.create({
   }
 })
 
-// 请求拦截器
+// interceptador de requisição
 request.interceptors.request.use(
   (config) => {
-    // 可以在这里添加token等认证信息
+    // dá para acrescentar token e outras credenciais aqui
     const token = localStorage.getItem('token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
@@ -20,56 +20,56 @@ request.interceptors.request.use(
     return config
   },
   (error) => {
-    console.error('请求错误:', error)
+    console.error('erro na requisição:', error)
     return Promise.reject(error)
   }
 )
 
-// 响应拦截器
+// interceptador de resposta
 request.interceptors.response.use(
   (response) => {
     const { data } = response
     
-    // 根据后端接口规范处理响应
+    // trata a resposta conforme o contrato do backend
     if (data.code === 200 || data.success) {
       return data
     } else {
-      ElMessage.error(data.msg || data.message || '请求失败')
-      return Promise.reject(new Error(data.msg || data.message || '请求失败'))
+      ElMessage.error(data.msg || data.message || 'a requisição falhou')
+      return Promise.reject(new Error(data.msg || data.message || 'a requisição falhou'))
     }
   },
   (error) => {
-    console.error('响应错误:', error)
+    console.error('erro na resposta:', error)
     
-    // 处理HTTP错误状态码
+    // trata os códigos de erro HTTP
     if (error.response) {
       const { status } = error.response
       switch (status) {
         case 401:
-          ElMessage.error('未授权，请重新登录')
-          // 可以在这里处理登录跳转
+          ElMessage.error('sem autorização, entre de novo')
+          // aqui dá para redirecionar para o login
           break
         case 403:
-          ElMessage.error('拒绝访问')
+          ElMessage.error('acesso negado')
           break
         case 404:
-          ElMessage.error('请求地址不存在')
+          ElMessage.error('endereço não encontrado')
           break
         case 500:
-          ElMessage.error('服务器内部错误')
+          ElMessage.error('erro interno do servidor')
           break
         default:
-          ElMessage.error('网络错误')
+          ElMessage.error('erro de rede')
       }
     } else {
-      ElMessage.error('网络连接失败')
+      ElMessage.error('falha na conexão de rede')
     }
     
     return Promise.reject(error)
   }
 )
 
-// 封装常用的请求方法
+// atalhos para os métodos de requisição mais usados
 export const http = {
   get(url, params) {
     return request.get(url, { params })

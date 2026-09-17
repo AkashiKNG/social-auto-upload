@@ -1,12 +1,12 @@
 <template>
   <div class="dashboard">
     <div class="page-header">
-      <h1>自媒体自动化运营系统</h1>
+      <h1>Automação de redes sociais</h1>
     </div>
 
     <div class="dashboard-content">
       <el-row :gutter="20">
-        <!-- 账号统计卡片 -->
+        <!-- cartão com o resumo das contas -->
         <el-col :span="8">
           <el-card class="stat-card">
             <div class="stat-card-content">
@@ -15,19 +15,19 @@
               </div>
               <div class="stat-info">
                 <div class="stat-value">{{ accountStats.total }}</div>
-                <div class="stat-label">账号总数</div>
+                <div class="stat-label">Total de contas</div>
               </div>
             </div>
             <div class="stat-footer">
               <div class="stat-detail">
-                <span>正常: {{ accountStats.normal }}</span>
-                <span>异常: {{ accountStats.abnormal }}</span>
+                <span>ok: {{ accountStats.normal }}</span>
+                <span>com erro: {{ accountStats.abnormal }}</span>
               </div>
             </div>
           </el-card>
         </el-col>
 
-        <!-- 平台统计卡片 -->
+        <!-- cartão com o resumo das plataformas -->
         <el-col :span="8">
           <el-card class="stat-card">
             <div class="stat-card-content">
@@ -36,21 +36,21 @@
               </div>
               <div class="stat-info">
                 <div class="stat-value">{{ platformStats.total }}</div>
-                <div class="stat-label">已接入平台</div>
+                <div class="stat-label">Plataformas conectadas</div>
               </div>
             </div>
             <div class="stat-footer">
               <div class="stat-detail">
-                <el-tooltip content="快手账号" placement="top">
+                <el-tooltip content="Contas Kuaishou" placement="top">
                   <el-tag size="small" type="success">{{ platformStats.kuaishou }}</el-tag>
                 </el-tooltip>
-                <el-tooltip content="抖音账号" placement="top">
+                <el-tooltip content="Contas Douyin" placement="top">
                   <el-tag size="small" type="danger">{{ platformStats.douyin }}</el-tag>
                 </el-tooltip>
-                <el-tooltip content="视频号账号" placement="top">
+                <el-tooltip content="Contas Canal do WeChat" placement="top">
                   <el-tag size="small" type="warning">{{ platformStats.channels }}</el-tag>
                 </el-tooltip>
-                <el-tooltip content="小红书账号" placement="top">
+                <el-tooltip content="Contas Xiaohongshu" placement="top">
                   <el-tag size="small" type="info">{{ platformStats.xiaohongshu }}</el-tag>
                 </el-tooltip>
               </div>
@@ -58,7 +58,7 @@
           </el-card>
         </el-col>
 
-        <!-- 素材统计卡片 -->
+        <!-- cartão com o resumo dos materiais -->
         <el-col :span="8">
           <el-card class="stat-card">
             <div class="stat-card-content">
@@ -67,31 +67,31 @@
               </div>
               <div class="stat-info">
                 <div class="stat-value">{{ contentStats.total }}</div>
-                <div class="stat-label">素材总数</div>
+                <div class="stat-label">Total de materiais</div>
               </div>
             </div>
             <div class="stat-footer">
               <div class="stat-detail">
-                <span>视频: {{ contentStats.videos }}</span>
-                <span>图片: {{ contentStats.images }}</span>
-                <span>其他: {{ contentStats.others }}</span>
+                <span>Vídeos: {{ contentStats.videos }}</span>
+                <span>Imagens: {{ contentStats.images }}</span>
+                <span>Outros: {{ contentStats.others }}</span>
               </div>
             </div>
           </el-card>
         </el-col>
       </el-row>
 
-      <!-- 快捷操作区域 -->
+      <!-- área de atalhos -->
       <div class="quick-actions">
-        <h2>快捷操作</h2>
+        <h2>Atalhos</h2>
         <el-row :gutter="20">
           <el-col :span="6">
             <el-card class="action-card" @click="navigateTo('/account-management')">
               <div class="action-icon">
                 <el-icon><UserFilled /></el-icon>
               </div>
-              <div class="action-title">账号管理</div>
-              <div class="action-desc">管理所有平台账号</div>
+              <div class="action-title">Contas</div>
+              <div class="action-desc">Gerencie as contas de todas as plataformas</div>
             </el-card>
           </el-col>
           <el-col :span="6">
@@ -99,8 +99,8 @@
               <div class="action-icon">
                 <el-icon><Upload /></el-icon>
               </div>
-              <div class="action-title">素材管理</div>
-              <div class="action-desc">上传和管理视频素材</div>
+              <div class="action-title">Materiais</div>
+              <div class="action-desc">Envie e organize os vídeos</div>
             </el-card>
           </el-col>
           <el-col :span="6">
@@ -108,8 +108,8 @@
               <div class="action-icon">
                 <el-icon><Timer /></el-icon>
               </div>
-              <div class="action-title">发布中心</div>
-              <div class="action-desc">发布内容到各平台</div>
+              <div class="action-title">Publicação</div>
+              <div class="action-desc">Publique o conteúdo nas plataformas</div>
             </el-card>
           </el-col>
           <el-col :span="6">
@@ -117,29 +117,29 @@
               <div class="action-icon">
                 <el-icon><DataAnalysis /></el-icon>
               </div>
-              <div class="action-title">关于系统</div>
-              <div class="action-desc">查看系统信息</div>
+              <div class="action-title">Sobre o sistema</div>
+              <div class="action-desc">Veja as informações do sistema</div>
             </el-card>
           </el-col>
         </el-row>
       </div>
 
-      <!-- 素材列表 -->
+      <!-- lista de materiais -->
       <div class="recent-tasks">
         <div class="section-header">
-          <h2>最近上传素材</h2>
-          <el-button text @click="navigateTo('/material-management')">查看全部</el-button>
+          <h2>Materiais enviados recentemente</h2>
+          <el-button text @click="navigateTo('/material-management')">Ver todos</el-button>
         </div>
 
         <el-table :data="recentMaterials" style="width: 100%" v-loading="loading">
-          <el-table-column prop="filename" label="文件名" width="300" />
-          <el-table-column prop="filesize" label="文件大小" width="120">
+          <el-table-column prop="filename" label="Arquivo" width="300" />
+          <el-table-column prop="filesize" label="Tamanho" width="120">
             <template #default="scope">
               {{ scope.row.filesize }} MB
             </template>
           </el-table-column>
-          <el-table-column prop="upload_time" label="上传时间" width="200" />
-          <el-table-column label="类型" width="100">
+          <el-table-column prop="upload_time" label="Enviado em" width="200" />
+          <el-table-column label="Tipo" width="100">
             <template #default="scope">
               <el-tag
                 :type="getFileTypeTag(scope.row.filename)"
@@ -152,7 +152,7 @@
           </el-table-column>
         </el-table>
 
-        <el-empty v-if="!loading && recentMaterials.length === 0" description="暂无素材数据" />
+        <el-empty v-if="!loading && recentMaterials.length === 0" description="Nenhum material ainda" />
       </div>
     </div>
   </div>
@@ -175,11 +175,11 @@ const accountStore = useAccountStore()
 const appStore = useAppStore()
 const loading = ref(false)
 
-// 账号统计数据 - 从真实数据计算
+// resumo das contas, calculado a partir dos dados reais
 const accountStats = computed(() => {
   const accounts = accountStore.accounts
-  const normal = accounts.filter(a => a.status === '正常').length
-  const abnormal = accounts.filter(a => a.status !== '正常' && a.status !== '验证中').length
+  const normal = accounts.filter(a => a.status === 'ok').length
+  const abnormal = accounts.filter(a => a.status !== 'ok' && a.status !== 'verificando').length
   return {
     total: accounts.length,
     normal,
@@ -187,19 +187,19 @@ const accountStats = computed(() => {
   }
 })
 
-// 平台统计数据 - 从真实数据计算
+// resumo das plataformas, calculado a partir dos dados reais
 const platformStats = computed(() => {
   const accounts = accountStore.accounts
-  const kuaishou = accounts.filter(a => a.platform === '快手').length
-  const douyin = accounts.filter(a => a.platform === '抖音').length
-  const channels = accounts.filter(a => a.platform === '视频号').length
-  const xiaohongshu = accounts.filter(a => a.platform === '小红书').length
-  // 统计有账号的平台数量
+  const kuaishou = accounts.filter(a => a.platform === 'Kuaishou').length
+  const douyin = accounts.filter(a => a.platform === 'Douyin').length
+  const channels = accounts.filter(a => a.platform === 'Canal do WeChat').length
+  const xiaohongshu = accounts.filter(a => a.platform === 'Xiaohongshu').length
+  // quantas plataformas têm alguma conta
   const total = [kuaishou, douyin, channels, xiaohongshu].filter(n => n > 0).length
   return { total, kuaishou, douyin, channels, xiaohongshu }
 })
 
-// 素材统计数据 - 从真实数据计算
+// resumo dos materiais, calculado a partir dos dados reais
 const videoExtensions = ['.mp4', '.avi', '.mov', '.wmv', '.flv', '.mkv']
 const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
 
@@ -215,36 +215,36 @@ const contentStats = computed(() => {
   }
 })
 
-// 最近上传的素材（最多显示5条）
+// materiais enviados por último (no máximo 5)
 const recentMaterials = computed(() => {
   return [...appStore.materials]
     .sort((a, b) => new Date(b.upload_time) - new Date(a.upload_time))
     .slice(0, 5)
 })
 
-// 获取文件类型
+// descobre o tipo do arquivo
 const getFileType = (filename) => {
-  if (videoExtensions.some(ext => filename.toLowerCase().endsWith(ext))) return '视频'
-  if (imageExtensions.some(ext => filename.toLowerCase().endsWith(ext))) return '图片'
-  return '其他'
+  if (videoExtensions.some(ext => filename.toLowerCase().endsWith(ext))) return 'Vídeos'
+  if (imageExtensions.some(ext => filename.toLowerCase().endsWith(ext))) return 'Imagens'
+  return 'Outros'
 }
 
-// 获取文件类型标签颜色
+// cor da etiqueta conforme o tipo do arquivo
 const getFileTypeTag = (filename) => {
   const type = getFileType(filename)
-  return { '视频': 'success', '图片': 'warning', '其他': 'info' }[type] || 'info'
+  return { 'Vídeos': 'success', 'Imagens': 'warning', 'Outros': 'info' }[type] || 'info'
 }
 
-// 导航到指定路由
+// navega para uma rota
 const navigateTo = (path) => {
   router.push(path)
 }
 
-// 加载数据
+// carrega os dados
 const fetchDashboardData = async () => {
   loading.value = true
   try {
-    // 并行获取账号和素材数据
+    // busca contas e materiais em paralelo
     const [accountRes, materialRes] = await Promise.allSettled([
       accountApi.getAccounts(),
       materialApi.getAllMaterials()
@@ -257,7 +257,7 @@ const fetchDashboardData = async () => {
       appStore.setMaterials(materialRes.value.data)
     }
   } catch (error) {
-    console.error('获取仪表盘数据失败:', error)
+    console.error('não consegui carregar os dados do painel:', error)
   } finally {
     loading.value = false
   }

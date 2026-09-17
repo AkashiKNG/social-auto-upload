@@ -22,8 +22,8 @@ from uploader.douyin_uploader.main import (
 def upload_video_to_douyin():
     account_file = Path(BASE_DIR / "cookies" / "douyin_uploader" / "account.json")
     video_file_path = Path(BASE_DIR) / "videos/demo.mp4"
-    video_meta_title = "男子为了心爱之人每天坚守❤️‍🩹"
-    video_meta_hashtags = ["坚持不懈", "爱情执着", "奋斗使者", "短视频"]
+    video_meta_title = "Ele espera todo dia por quem ama ❤️‍🩹"
+    video_meta_hashtags = ["persistencia", "amor", "superacao", "videocurto"]
     thumbnail_landscape_path = Path(BASE_DIR) / "videos/demo.png"
     thumbnail_portrait_path = Path(BASE_DIR) / "videos/demo.png"
     video_meta_publish_time = datetime.strptime("2026-3-25 12:13", "%Y-%m-%d %H:%M")
@@ -44,8 +44,8 @@ def upload_video_to_douyin():
 def upload_note_to_douyin():
     account_file = Path(BASE_DIR / "cookies" / "douyin_uploader" / "account.json")
     image_paths = [Path(BASE_DIR) / "videos/demo.png", Path(BASE_DIR) / "videos/demo.png", Path(BASE_DIR) / "videos/demo.png"]
-    note = "图文内容示例"
-    tags = ["图文", "示例", "抖音图文"]
+    note = "Exemplo de texto do post"
+    tags = ["post", "exemplo", "douyinpost"]
     video_meta_publish_time = datetime.strptime("2026-3-25 12:13", "%Y-%m-%d %H:%M")
 
     app = DouYinNote(

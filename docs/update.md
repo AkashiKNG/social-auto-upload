@@ -1,47 +1,47 @@
-# 更新说明
+# Como atualizar
 
-这个文档分成两部分：
+Este documento tem duas partes:
 
-- `For Humans`：给正常使用仓库的人看
-- `For AI Agents`：给能执行命令和自动排查的 agent 看
+- `For Humans`: para quem usa o repositório
+- `For AI Agents`: para agentes que executam comandos e investigam sozinhos
 
 ## For Humans
 
-### 1. 拉取最新代码
+### 1. Puxar o código mais novo
 
 ```bash
 git pull
 ```
 
-如果你平时是切分支开发，请先确认当前所在分支。
+Se você costuma trabalhar em branches, confira antes em qual está.
 
-### 2. 更新本地可编辑安装
+### 2. Atualizar a instalação editável
 
-如果仓库最近改了 CLI、入口脚本、依赖配置，建议重新执行：
+Se a CLI, os scripts de entrada ou as dependências mudaram, rode de novo:
 
 ```bash
 uv pip install -e .
 ```
 
-### 3. 如有需要，更新浏览器依赖
+### 3. Atualizar o navegador, se precisar
 
-当前主线使用 `patchright`。
+O projeto usa o `patchright`.
 
-Windows PowerShell：
+Windows PowerShell:
 
 ```powershell
 $env:PLAYWRIGHT_DOWNLOAD_HOST="https://npmmirror.com/mirrors/playwright"; patchright install chromium
 ```
 
-Linux / macOS：
+Linux / macOS:
 
 ```bash
 PLAYWRIGHT_DOWNLOAD_HOST="https://npmmirror.com/mirrors/playwright" patchright install chromium
 ```
 
-### 4. 更新后自检
+### 4. Conferir depois de atualizar
 
-建议至少检查：
+Vale checar pelo menos:
 
 ```bash
 sau --help
@@ -55,7 +55,7 @@ sau xiaohongshu check --account your_account
 sau bilibili check --account your_account
 ```
 
-如果你在使用 skill，也建议同步看一下：
+Se você usa as skills, dê uma olhada também em:
 
 - `skills/douyin-upload/SKILL.md`
 - `skills/kuaishou-upload/SKILL.md`
@@ -65,23 +65,23 @@ sau bilibili check --account your_account
 
 ## For AI Agents
 
-如果你是 agent，更新仓库后建议按下面顺序做最小验证：
+Se você é um agente, depois de atualizar o repositório faça esta verificação mínima:
 
-1. 拉取最新代码：
+1. Puxe o código mais novo:
 
 ```bash
 git pull
 ```
 
-2. 重新同步本地安装：
+2. Sincronize a instalação local:
 
 ```bash
 uv pip install -e .
 ```
 
-3. 如需浏览器驱动，更新 `patchright` Chromium
+3. Se precisar do navegador, atualize o Chromium do `patchright`
 
-4. 重新验证 CLI：
+4. Confira a CLI de novo:
 
 ```bash
 sau --help
@@ -91,7 +91,7 @@ sau xiaohongshu --help
 sau bilibili --help
 ```
 
-5. 如果任务是浏览器平台链路，再继续验证：
+5. Se a tarefa envolve as plataformas que usam navegador, confira também:
 
 ```bash
 sau douyin check --account test
@@ -100,7 +100,7 @@ sau xiaohongshu check --account test
 sau bilibili check --account test
 ```
 
-6. 如果用户依赖 skill，再检查这些路径是否仍存在且契约没变：
+6. Se o usuário depende das skills, veja se estes caminhos ainda existem e se o contrato não mudou:
 
 - `skills/douyin-upload/SKILL.md`
 - `skills/douyin-upload/references/cli-contract.md`
@@ -115,11 +115,11 @@ sau bilibili check --account test
 - `skills/bilibili-upload/references/cli-contract.md`
 - `skills/bilibili-upload/references/runtime-requirements.md`
 
-### 对 agent 的额外说明
+### Observações extras para agentes
 
-- 优先相信 `pyproject.toml`，不要把 `requirements.txt` 视为当前主线真相
-- 当前 README 只做总览，安装和更新以 `docs/install.md`、`docs/update.md` 为准
-- Web 相关内容属于历史路径，见 `docs/legacy-web.md`
-- 如果更新后的登录流程输出了本地二维码图片，agent 应直接把图片展示/发送给用户扫码，不要只回传图片路径
-- Bilibili 命令运行时会自动检查并更新 `biliup`
-- Bilibili 登录当前仍建议让用户自己在本地真实终端里执行；如果二维码显示不完整，可让用户直接打开 `qrcode.png` 扫码
+- Confie no `pyproject.toml`; o `requirements.txt` não é a verdade atual
+- O README é só visão geral: instalação e atualização são o `docs/install.md` e o `docs/update.md`
+- A parte Web é caminho antigo, descrito em `docs/legacy-web.md`
+- Se o login gerar uma imagem de QR code, mostre ou envie a imagem ao usuário; não devolva só o caminho
+- Os comandos do Bilibili conferem e atualizam o `biliup` sozinhos
+- O login do Bilibili ainda deve ser feito pelo próprio usuário num terminal de verdade; se o QR code sair cortado, peça que abra o `qrcode.png`

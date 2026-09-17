@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""测试支付宝生活号上传：使用已保存的 cookie 上传并发布一个视频。"""
+"""Teste de envio para a conta de vida do Alipay: usa o cookie salvo para enviar e publicar um vídeo."""
 import asyncio
 import sys
 from datetime import datetime
@@ -16,11 +16,11 @@ async def main():
     account_file = base / "cookies" / "alipay_uploader" / "account.json"
 
     app = AlipayVideo(
-        title="测试发布标题",
+        title="Título de teste",
         file_path=str(video_path),
-        tags=["测试", "自动化"],
+        tags=["teste", "automacao"],
         account_file=str(account_file),
-        desc="测试描述",
+        desc="Descrição de teste",
         thumbnail_path=r"C:\Users\admin\Downloads\ScreenShot_2026-08-04_170159_630.png",
         collection_name="",
         headless=False,

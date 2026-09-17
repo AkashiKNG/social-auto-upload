@@ -17,5 +17,5 @@ sau bilibili upload-video \
   --title "Bilibili CLI Demo" \
   --desc "Bilibili CLI Demo" \
   --tid 249 \
-  --tags 足球,测试 \
+  --tags futebol,teste \
   --schedule "2026-03-26 16:00"

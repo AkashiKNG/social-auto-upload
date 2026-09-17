@@ -1,4 +1,4 @@
-# Language: 中文
+# Idioma: português
 import asyncio
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -10,18 +10,18 @@ from uploader.douyin_uploader.main import DouYinVideo
 class DouyinDeclarationTests(unittest.TestCase):
     def test_upload_only_sets_explicit_declaration(self):
         video = DouYinVideo(
-            "标题", "/tmp/demo.mp4", [], 0, "/tmp/cookie.json",
-            declaration="已确认声明原文",
+            "Título", "/tmp/demo.mp4", [], 0, "/tmp/cookie.json",
+            declaration="Declaração confirmada",
         )
-        self.assertEqual(video.declaration, "已确认声明原文")
+        self.assertEqual(video.declaration, "Declaração confirmada")
 
     def test_missing_declaration_does_not_fall_back_to_personal_opinion(self):
-        video = DouYinVideo("标题", "/tmp/demo.mp4", [], 0, "/tmp/cookie.json")
+        video = DouYinVideo("Título", "/tmp/demo.mp4", [], 0, "/tmp/cookie.json")
         self.assertIsNone(video.declaration)
 
     def test_legacy_positional_runtime_flags_keep_their_meaning(self):
         video = DouYinVideo(
-            "标题", "/tmp/demo.mp4", [], 0, "/tmp/cookie.json",
+            "Título", "/tmp/demo.mp4", [], 0, "/tmp/cookie.json",
             None, "", "", None, "",
             "scheduled", False, False,
         )
@@ -31,7 +31,7 @@ class DouyinDeclarationTests(unittest.TestCase):
         self.assertIsNone(video.declaration)
 
     def test_apply_declaration_skips_when_unspecified(self):
-        video = DouYinVideo("标题", "/tmp/demo.mp4", [], 0, "/tmp/cookie.json")
+        video = DouYinVideo("Título", "/tmp/demo.mp4", [], 0, "/tmp/cookie.json")
         video.set_self_declaration = AsyncMock()
         asyncio.run(video.apply_self_declaration(object()))
         video.set_self_declaration.assert_not_awaited()
@@ -39,31 +39,31 @@ class DouyinDeclarationTests(unittest.TestCase):
     def test_apply_declaration_uses_exact_explicit_text(self):
         page = object()
         video = DouYinVideo(
-            "标题", "/tmp/demo.mp4", [], 0, "/tmp/cookie.json",
-            declaration="已确认声明原文",
+            "Título", "/tmp/demo.mp4", [], 0, "/tmp/cookie.json",
+            declaration="Declaração confirmada",
         )
         video.set_self_declaration = AsyncMock(return_value=True)
         asyncio.run(video.apply_self_declaration(page))
-        video.set_self_declaration.assert_awaited_once_with(page, "已确认声明原文")
+        video.set_self_declaration.assert_awaited_once_with(page, "Declaração confirmada")
 
     def test_explicit_declaration_failure_blocks_publish(self):
         video = DouYinVideo(
-            "标题", "/tmp/demo.mp4", [], 0, "/tmp/cookie.json",
-            declaration="已确认声明原文",
+            "Título", "/tmp/demo.mp4", [], 0, "/tmp/cookie.json",
+            declaration="Declaração confirmada",
         )
         video.set_self_declaration = AsyncMock(return_value=False)
-        with self.assertRaisesRegex(RuntimeError, "自主声明"):
+        with self.assertRaisesRegex(RuntimeError, "declaração própria"):
             asyncio.run(video.apply_self_declaration(object()))
 
     def test_declaration_failure_closes_browser_resources(self):
         video = DouYinVideo(
-            "标题", "/tmp/demo.mp4", [], 0, "/tmp/cookie.json",
-            declaration="已确认声明原文",
+            "Título", "/tmp/demo.mp4", [], 0, "/tmp/cookie.json",
+            declaration="Declaração confirmada",
         )
         video.validate_upload_args = AsyncMock()
         video.fill_title_and_description = AsyncMock()
         video.set_thumbnail = AsyncMock()
-        video.apply_self_declaration = AsyncMock(side_effect=RuntimeError("抖音自主声明设置失败"))
+        video.apply_self_declaration = AsyncMock(side_effect=RuntimeError("não consegui definir a declaração própria do Douyin"))
 
         locator = MagicMock()
         locator.set_input_files = AsyncMock()
@@ -86,7 +86,7 @@ class DouyinDeclarationTests(unittest.TestCase):
         with (
             patch.object(douyin_main, "set_init_script", AsyncMock(return_value=context)),
             patch.object(douyin_main.asyncio, "sleep", AsyncMock()),
-            self.assertRaisesRegex(RuntimeError, "自主声明"),
+            self.assertRaisesRegex(RuntimeError, "declaração própria"),
         ):
             asyncio.run(video.upload(playwright))
 

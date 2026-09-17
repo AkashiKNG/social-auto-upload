@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-"""百家号(headless)扫码登录 → 保存 cookie。
+"""Login por QR code no Baijiahao (sem janela) e gravação do cookie.
 
-说明：
-  - 无头浏览器打开百家号登录页并提取登录二维码，放大截图后保存为 png，
-    并用终端 ASCII 二维码展示；你手机/百度APP扫码登录。
-  - 扫码成功后自动把登录态写入 cookies/baijiahao_uploader/account.json。
+Observações:
+  - o navegador sem janela abre a tela de login do Baijiahao, recorta o QR code, amplia e salva como png,
+    e também mostra o QR code em ASCII no terminal; escaneie pelo celular ou pelo app da Baidu.
+  - escaneado o QR code, a sessão é gravada em cookies/baijiahao_uploader/account.json.
 
-用法：
+Uso:
     python examples/get_baijiahao_cookie_headless.py
 """
 from pathlib import Path
@@ -21,6 +21,7 @@ from uploader.baijiahao_uploader.main import cookie_auth, baijiahao_logger
 
 
 QR_SELECTOR = 'img[src^="https://passport.baidu.com/v2/api/qrcode"]'
+# o texto abaixo fica em chinês de propósito: é o que a página do Baijiahao mostra no botão
 LOGIN_BTN_TEXT = "登录"
 LOGIN_URL = "https://baijiahao.baidu.com/builder/theme/bjh/login"
 
@@ -73,7 +74,7 @@ async def main():
 
     import os
     if os.path.exists(account_file) and await cookie_auth(str(account_file)):
-        baijiahao_logger.success("[+] cookie 已有效，无需重新登录")
+        baijiahao_logger.success("[+] o cookie ainda vale; não precisa entrar de novo")
         return
 
     qrcode_path = build_login_qrcode_path(str(account_file))
@@ -85,23 +86,23 @@ async def main():
         page = await context.new_page()
         await page.goto(LOGIN_URL, timeout=60000, wait_until="domcontentloaded")
         await page.wait_for_timeout(4000)
-        # 进入登录弹窗
+        # abre a janela de login
         await page.get_by_text(LOGIN_BTN_TEXT, exact=True).first.click(timeout=10000)
         await page.wait_for_timeout(4000)
 
         qrcode_content = await _grab_qr(page, qrcode_path)
-        baijiahao_logger.info(f"🖼️ 二维码已保存: {qrcode_path}")
+        baijiahao_logger.info(f"🖼️ QR code salvo em: {qrcode_path}")
         if qrcode_content:
-            print_terminal_qrcode(qrcode_content, qrcode_path, "百度APP/手机百度")
+            print_terminal_qrcode(qrcode_content, qrcode_path, "app da Baidu")
         else:
-            print(f"未能解码二维码，请直接打开文件扫码:\n  {qrcode_path}")
+            print(f"não consegui decodificar o QR code; abra o arquivo e escaneie:\n  {qrcode_path}")
 
         if await _wait_login(page):
-            baijiahao_logger.success("[+] 扫码登录成功，正在保存 cookie...")
+            baijiahao_logger.success("[+] login por QR code concluído; salvando o cookie...")
             await context.storage_state(path=str(account_file))
-            baijiahao_logger.success(f"[+] cookie 已保存: {account_file}")
+            baijiahao_logger.success(f"[+] cookie salvo em: {account_file}")
         else:
-            baijiahao_logger.error("[-] 等待扫码超时（约 6 分钟），未完成登录。")
+            baijiahao_logger.error("[-] tempo esgotado esperando o QR code (uns 6 minutos); login não concluído.")
         await browser.close()
 
 

@@ -1,11 +1,11 @@
 """
-当前主线优先使用 CLI：
+O caminho atual é a CLI:
 
     sau xiaohongshu login --account <account_name>
-    sau xiaohongshu upload-video --account <account_name> --file videos/demo.mp4 --title "示例标题" --desc "示例简介"
-    sau xiaohongshu upload-note --account <account_name> --images videos/1.png videos/2.png --title "图文标题" --note "图文正文"
+    sau xiaohongshu upload-video --account <account_name> --file videos/demo.mp4 --title "Título de exemplo" --desc "Descrição de exemplo"
+    sau xiaohongshu upload-note --account <account_name> --images videos/1.png videos/2.png --title "Título do post" --note "Texto do post"
 
-这个脚本保留为小红书 uploader 的调试入口 / 历史直连路径。
+Este script fica como entrada de depuração do uploader do Xiaohongshu, um caminho histórico.
 """
 
 import asyncio
@@ -26,10 +26,10 @@ def upload_video_to_xiaohongshu():
     video_file = Path(BASE_DIR) / "videos" / "demo.mp4"
     thumbnail_path = video_file.with_suffix(".png")
     app = XiaoHongShuVideo(
-        title="小红书视频示例",
+        title="Exemplo de vídeo no Xiaohongshu",
         file_path=str(video_file),
-        desc="你好",
-        tags=["小红书", "视频示例", "调试入口"],
+        desc="Olá",
+        tags=["xiaohongshu", "exemplovideo", "depuracao"],
         publish_strategy=XIAOHONGSHU_PUBLISH_STRATEGY_IMMEDIATE,
         publish_date=0,
         account_file=str(ACCOUNT_FILE),
@@ -43,10 +43,10 @@ def upload_video_to_xiaohongshu_scheduled():
     thumbnail_path = video_file.with_suffix(".png")
     publish_time = (datetime.now() + timedelta(hours=3)).replace(second=0, microsecond=0)
     app = XiaoHongShuVideo(
-        title="小红书视频定时发布示例",
+        title="Exemplo de vídeo agendado no Xiaohongshu",
         file_path=str(video_file),
-        desc="这是一条定时发布的小红书视频示例",
-        tags=["小红书", "定时发布", "调试入口"],
+        desc="Este é um exemplo de vídeo agendado no Xiaohongshu",
+        tags=["xiaohongshu", "agendado", "depuracao"],
         publish_strategy=XIAOHONGSHU_PUBLISH_STRATEGY_SCHEDULED,
         publish_date=publish_time,
         account_file=str(ACCOUNT_FILE),
@@ -64,12 +64,12 @@ def upload_note_to_xiaohongshu():
     image_paths = [str(path) for path in image_candidates if path.exists()]
     app = XiaoHongShuNote(
         image_paths=image_paths,
-        note="小红书图文内容示例 #图文调试",
-        tags=["小红书图文", "自动上传", "调试入口"],
+        note="Exemplo de post de imagens no Xiaohongshu #depuracao",
+        tags=["xiaohongshupost", "envioautomatico", "depuracao"],
         publish_strategy=XIAOHONGSHU_PUBLISH_STRATEGY_IMMEDIATE,
         publish_date=0,
         account_file=str(ACCOUNT_FILE),
-        title="小红书图文示例",
+        title="Exemplo de post no Xiaohongshu",
     )
     asyncio.run(app.xiaohongshu_upload_note())
 
@@ -83,12 +83,12 @@ def upload_note_to_xiaohongshu_scheduled():
     publish_time = (datetime.now() + timedelta(hours=3)).replace(second=0, microsecond=0)
     app = XiaoHongShuNote(
         image_paths=image_paths,
-        note="小红书图文内容示例 #图文调试",
-        tags=["小红书图文", "自动上传", "调试入口"],
+        note="Exemplo de post de imagens no Xiaohongshu #depuracao",
+        tags=["xiaohongshupost", "envioautomatico", "depuracao"],
         publish_strategy=XIAOHONGSHU_PUBLISH_STRATEGY_SCHEDULED,
         publish_date=publish_time,
         account_file=str(ACCOUNT_FILE),
-        title="小红书图文示例",
+        title="Exemplo de post no Xiaohongshu",
     )
     asyncio.run(app.xiaohongshu_upload_note())
 

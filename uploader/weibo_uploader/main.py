@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
-"""微博视频上传 + 扫码登录。
+"""Weibo envio de vídeo + login por QR code.
 
-功能：
-  - weibo_cookie_gen: headless 扫码登录（微博 passport 二维码）
-  - cookie_auth: 验证 cookie 是否有效
-  - weibo_setup: 统一入口（检查/触发登录）
-  - WeiBoVideo: 视频上传类
+o que faz: 
+  - weibo_cookie_gen: headless login por QR code (QR code do passport do Weibo)
+  - cookie_auth: confere se o cookie ainda vale
+  - weibo_setup: entrada única (verifica a sessão e, se preciso, faz login)
+  - WeiBoVideo: classe de envio de vídeo
 
-基于 playwright codegen 录制脚本改写。
-入口页：https://weibo.com/
-发布页：点击首页「视频」入口弹出新窗口（视频发布页）
+adaptado de uma gravação do playwright codegen.
+página de entrada: https://weibo.com/
+página de publicação: clica na inicial "vídeo" a entrada abre outra janela (página de publicação do vídeo)
 """
 from __future__ import annotations
 
@@ -30,10 +30,10 @@ from utils.login_qrcode import build_login_qrcode_path, remove_qrcode_file
 
 WEIBO_HOME_URL = "https://weibo.com/"
 WEIBO_LOGIN_URL = "https://weibo.com/newlogin?tabtype=weibo&gid=102803&openLoginLayer=0&url=https://weibo.com/"
-# 微博 passport 扫码登录页（直接跳这里，绕过首页 popup）
+# tela de login por QR code do passport do Weibo (vai direto para cá, sem o pop-up da página inicial)
 WEIBO_PASSPORT_QR_URL = "https://passport.weibo.com/sso/signin?entry=miniblog&source=miniblog&url=https%3A%2F%2Fweibo.com%2F"
 
-# 微博 passport 二维码选择器（扫码登录页中的二维码图片）
+# seletor do QR code do passport do Weibo (login por QR codea imagem do QR code da página)
 QR_SELECTOR = 'img[src*="qrcode"], img[src*="qr"]'
 
 
@@ -77,17 +77,17 @@ def _resolve_account_file(account_file: str | Path) -> str:
 
 
 async def _grab_qr(page: Page, account_file: str) -> dict:
-    """截取微博 passport 扫码登录二维码。
+    """recorta o QR code da tela de login do passport do Weibo.
 
-    微博 passport 登录页的二维码可能是 img 或 canvas，尝试多种选择器。
+    o QR code da tela de login do passport do Weibo pode ser img ou canvas; tentamos vários seletores.
     """
-    # 多种可能的二维码选择器（passport 页面结构可能变化）
+    # vários seletores possíveis para o QR code (passport a estrutura da página pode mudar)
     selectors = [
         'img[src*="qrcode"]',
         'img[src*="qr"]',
         'img[node-type="qrcode_img"]',
         '.qrcode img',
-        'canvas',  # 部分版本用 canvas 绘制二维码
+        'canvas',  # algumas versões desenham o QR code num canvas
     ]
 
     qr = None
@@ -95,16 +95,16 @@ async def _grab_qr(page: Page, account_file: str) -> dict:
         loc = page.locator(sel).first
         if await loc.count():
             qr = loc
-            weibo_logger.info(_msg("🔍", f"找到二维码元素: {sel}"))
+            weibo_logger.info(_msg("🔍", f"achei o elemento do QR code: {sel}"))
             break
 
     if not qr:
-        # 最后兜底：截取整个页面中心区域
-        weibo_logger.warning(_msg("⚠️", "未找到二维码元素，截取页面截图"))
+        # última reserva: recorta o centro da página inteira
+        weibo_logger.warning(_msg("⚠️", "não achei o elemento do QR code; tirando um print"))
         qrcode_path = build_login_qrcode_path(account_file)
         qrcode_path.parent.mkdir(parents=True, exist_ok=True)
         await page.screenshot(path=str(qrcode_path))
-        weibo_logger.info(_msg("🖼️", f"页面截图已保存到: {qrcode_path}"))
+        weibo_logger.info(_msg("🖼️", f"print da página salvo em: {qrcode_path}"))
         return {"image_path": str(qrcode_path), "image_data_url": ""}
 
     await qr.wait_for(state="visible", timeout=30000)
@@ -112,7 +112,7 @@ async def _grab_qr(page: Page, account_file: str) -> dict:
     qrcode_path = build_login_qrcode_path(account_file)
     qrcode_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # 优先直接下载高清图片 URL（img 元素）
+    # tenta primeiro baixar a URL da imagem em alta (img elemento)
     tag = await qr.evaluate("el => el.tagName.toLowerCase()")
     if tag == "img":
         src = await qr.get_attribute("src")
@@ -125,28 +125,28 @@ async def _grab_qr(page: Page, account_file: str) -> dict:
         else:
             await qr.screenshot(path=str(qrcode_path))
     else:
-        # canvas 或其他元素：直接截图
+        # canvas ou outro elemento: tira o print direto
         await qr.screenshot(path=str(qrcode_path))
 
-    weibo_logger.info(_msg("🖼️", f"二维码已保存到: {qrcode_path}"))
-    # 终端不渲染二维码，只给出文件位置，用微博APP打开图片扫码
-    print(f"请打开 {qrcode_path}，用微博APP扫描该二维码登录")
+    weibo_logger.info(_msg("🖼️", f"QR code salvo em: {qrcode_path}"))
+    # o terminal não desenha o QR code, só mostra onde está o arquivo; abra a imagem e escaneie pelo aplicativo do Weibo
+    print(f"abra {qrcode_path}, escaneie este QR code pelo aplicativo do Weibo")
     return {"image_path": str(qrcode_path), "image_data_url": ""}
 
 
 async def _is_login_completed(page: Page) -> bool:
-    """判断微博登录是否完成：URL 回到首页 且 出现用户头像/feed 流。"""
+    """vê se o login do Weibo terminouído: URL volta à página inicial e aparecem a foto do perfil e o feed."""
     url = page.url
-    # 还在 login/passport 页面
+    # ainda na página de login/passport
     if "newlogin" in url or "passport" in url:
         return False
-    # 检查是否回到首页且有用户态
+    # vê se voltou à página inicial já autenticado
     if "weibo.com" in url and "login" not in url:
-        # 出现 feed 流或头像说明登录成功
+        # o feed ou a foto do perfil aparecendo, o login deu certo
         has_user = await page.locator('[class*="Nav_avatar"], [class*="woo-avatar"]').count()
         if has_user:
             return True
-        # cookies 中有 SUB 说明登录成功
+        # cookies ter o SUB quer dizer que o login deu certo
         cookies = await page.context.cookies()
         if any(c.get("name") == "SUB" for c in cookies):
             return True
@@ -154,73 +154,73 @@ async def _is_login_completed(page: Page) -> bool:
 
 
 async def weibo_cookie_gen(account_file, qrcode_callback=None, poll_interval: int = 3, max_checks: int = 120, headless: bool = LOCAL_CHROME_HEADLESS):
-    """无头/有头扫码登录微博，保存 cookie。
+    """login por QR code no Weibo, com ou sem janela, salvando o cookie.
 
-    流程：直接打开微博 passport 扫码页 → 截取二维码 → 等待扫码完成（跳转回首页）→ 保存 storage_state。
-    返回标准 login result dict。
+    fluxo: abre direto a tela de QR code do passport do Weibo → recorta o QR code → esperando a leitura do QR code (volta para a página inicial)→ salva o storage_state.
+    devolve o dicionário padrão do resultado de login.
     """
     account_file = _resolve_account_file(account_file)
     Path(account_file).parent.mkdir(parents=True, exist_ok=True)
     qrcode_path = None
-    result = _build_login_result(False, "failed", "微博登录失败", account_file)
+    result = _build_login_result(False, "failed", "falha no login do Weibo", account_file)
 
     async with async_playwright() as playwright:
         browser = await playwright.chromium.launch(**_build_launch_kwargs(headless=headless))
         context = await browser.new_context()
         try:
             page = await context.new_page()
-            # 直接导航到 passport 扫码登录页，绕过首页的"登录"按钮（headless 下不可见）
+            # vai direto para a tela de QR code do passport, sem passar pela inicial e seu "login" botão (headless fica invisível)
             await page.goto(WEIBO_PASSPORT_QR_URL, timeout=60000, wait_until="domcontentloaded")
             await page.wait_for_timeout(5000)
 
             if headless:
-                weibo_logger.info(_msg("🧍", "无头登录中：二维码已存为图片，请用微博APP扫码"))
+                weibo_logger.info(_msg("🧍", "login sem janela: o QR code virou imagem; escaneie pelo aplicativo do Weibo"))
             else:
-                weibo_logger.info(_msg("🧍", "请在打开的浏览器中扫码登录微博"))
+                weibo_logger.info(_msg("🧍", "entre no Weibo pelo QR code na janela aberta"))
 
-            # 截取二维码
+            # recorta o QR code
             qrcode_info = await _grab_qr(page, account_file)
             qrcode_path = Path(qrcode_info["image_path"]) if qrcode_info.get("image_path") else None
             await _emit_qrcode_callback(qrcode_callback, qrcode_info)
 
-            weibo_logger.info(_msg("🧍", "请扫码，正在耐心等待登录完成"))
+            weibo_logger.info(_msg("🧍", "escaneie o QR code; esperando o login terminar"))
 
-            # 轮询等待登录完成（页面跳转离开 passport 或出现用户态 cookie）
+            # fica verificando até o login terminar (a página sai do passport ou aparece o cookie de sessão)
             for _ in range(max_checks):
                 current_url = page.url
-                # 跳转离开 passport 页面说明登录成功
+                # sair da página do passport quer dizer que o login deu certo
                 if "passport" not in current_url and "weibo.com" in current_url:
-                    weibo_logger.info(_msg("🥳", f"扫码成功，跳转到: {current_url}"))
-                    result = _build_login_result(True, "success", "微博扫码登录成功", account_file, qrcode_info, current_url)
+                    weibo_logger.info(_msg("🥳", f"escanear o QR codedeu certo, indo para: {current_url}"))
+                    result = _build_login_result(True, "success", "login por QR code do Weibo concluído", account_file, qrcode_info, current_url)
                     break
-                # 检查 cookies 中是否出现 SUB（部分情况页面不跳转但 cookie 已写入）
+                # procura o SUB nos cookies (às vezes a página não navega, mas o cookie já foi gravado)
                 cookies = await context.cookies()
                 if any(c.get("name") == "SUB" and c.get("value") for c in cookies):
-                    weibo_logger.info(_msg("🥳", f"扫码成功（检测到 SUB cookie），当前: {current_url}"))
-                    result = _build_login_result(True, "success", "微博扫码登录成功", account_file, qrcode_info, current_url)
+                    weibo_logger.info(_msg("🥳", f"escanear o QR codedeu certo (achei o cookie SUB), atual: {current_url}"))
+                    result = _build_login_result(True, "success", "login por QR code do Weibo concluído", account_file, qrcode_info, current_url)
                     break
                 await page.wait_for_timeout(poll_interval * 1000)
             else:
-                result = _build_login_result(False, "timeout", "等待微博扫码登录超时", account_file, qrcode_info, page.url)
+                result = _build_login_result(False, "timeout", "tempo esgotado esperando o login por QR code do Weibo", account_file, qrcode_info, page.url)
 
             if result["success"]:
                 await asyncio.sleep(2)
                 await context.storage_state(path=account_file)
-                weibo_logger.success(_msg("🥳", f"cookie 已保存: {account_file}"))
+                weibo_logger.success(_msg("🥳", f"cookie salvo: {account_file}"))
         except Exception as exc:
             result = _build_login_result(False, "failed", str(exc), account_file, current_url=page.url if "page" in locals() else "")
         finally:
             if remove_qrcode_file(qrcode_path):
-                weibo_logger.info(_msg("🧹", f"临时二维码文件已清理: {qrcode_path}"))
+                weibo_logger.info(_msg("🧹", f"arquivo temporário do QR code apagado: {qrcode_path}"))
             if not result["success"]:
-                weibo_logger.error(_msg("😢", f"登录失败: {result['message']}"))
+                weibo_logger.error(_msg("😢", f"falha no login: {result['message']}"))
             await context.close()
             await browser.close()
     return result
 
 
 async def cookie_auth(account_file):
-    """验证微博 cookie 是否有效。访问首页，检测是否出现登录提示。"""
+    """verificaçãoo cookie do Weibo ainda é válido.abre a página inicial e vê se pede login."""
     account_file = _resolve_account_file(account_file)
     async with async_playwright() as playwright:
         browser = await playwright.chromium.launch(**_build_launch_kwargs(headless=True))
@@ -230,47 +230,47 @@ async def cookie_auth(account_file):
             await page.goto(WEIBO_HOME_URL, timeout=60000, wait_until="domcontentloaded")
             await page.wait_for_timeout(5000)
 
-            # 检查是否被跳转到登录页
+            # vê se houve redirecionamento para a página de login
             if "newlogin" in page.url or "passport" in page.url:
-                weibo_logger.info(_msg("🥹", "cookie 已失效（跳转到登录页）"))
+                weibo_logger.info(_msg("🥹", "cookie expirado (redirecionado para a página de login)"))
                 return False
 
-            # 检查是否有「登录」按钮（未登录态会显示）
+            # vê se existe "login" botão (sem sessão, aparece)
             login_btn = page.get_by_text("登录", exact=True).first
             if await login_btn.count() and await login_btn.is_visible():
-                weibo_logger.info(_msg("🥹", "cookie 已失效（出现登录按钮）"))
+                weibo_logger.info(_msg("🥹", "cookie expirado (o botão de login apareceuão)"))
                 return False
 
-            weibo_logger.success(_msg("🥳", "cookie 有效"))
+            weibo_logger.success(_msg("🥳", "cookie válido"))
             return True
         except Exception as exc:
-            weibo_logger.warning(_msg("😵", f"cookie 校验出错，按失效处理: {exc}"))
+            weibo_logger.warning(_msg("😵", f"cookie erro na verificação: tratando como expirado: {exc}"))
             return False
         finally:
             await browser.close()
 
 
 async def weibo_setup(account_file, handle=False, return_detail=False, qrcode_callback=None, headless: bool = LOCAL_CHROME_HEADLESS):
-    """统一入口：检查 cookie → 如无效且 handle=True 则触发扫码登录。"""
+    """entrada única: confere o cookie → se estiver inválido e handle=True dispara o login por QR code."""
     account_file = _resolve_account_file(account_file)
     if not os.path.exists(account_file) or not await cookie_auth(account_file):
         if not handle:
-            result = _build_login_result(False, "cookie_invalid", "cookie 文件不存在或已失效", account_file)
+            result = _build_login_result(False, "cookie_invalid", "cookie arquivo inexistente ou expirado", account_file)
             return result if return_detail else False
-        weibo_logger.info(_msg("🥹", "cookie 文件不存在或已失效，自动打开浏览器请扫码登录"))
+        weibo_logger.info(_msg("🥹", "cookie arquivo inexistente ou expirado: abrindo o navegador para você escanear o QR code"))
         result = await weibo_cookie_gen(account_file, qrcode_callback=qrcode_callback, headless=headless)
         return result if return_detail else result["success"]
 
-    result = _build_login_result(True, "cookie_valid", "cookie 有效", account_file)
+    result = _build_login_result(True, "cookie_valid", "cookie válido", account_file)
     return result if return_detail else True
 
 
 class WeiBoVideo(BaseVideoUploader):
-    """微博视频上传。
+    """Weibo envio de vídeo.
 
-    流程：打开首页 → 点「视频」入口弹出发布窗口 → 上传视频文件 →
-         等待上传完成 → 填标题 → 上传封面 → 勾选二创 + AI声明 →
-         填描述 → 点击发布。
+    fluxo: abre a página inicial → clica na entrada "vídeo", que abre a janela de publicação → envia o arquivo de vídeo →
+         espera o envio terminarído → preenche o título → envia a capa → marca conteúdo derivado + AIdeclaração →
+         preenche a descrição → clicapublicar.
     """
 
     def __init__(
@@ -301,77 +301,77 @@ class WeiBoVideo(BaseVideoUploader):
 
     async def validate_upload_args(self):
         if not os.path.exists(self.account_file):
-            raise RuntimeError(f"cookie文件不存在，请先完成微博登录: {self.account_file}")
+            raise RuntimeError(f"cookiearquivo inexistente; conclua antes o ídologin do Weibo: {self.account_file}")
         if not await cookie_auth(self.account_file):
-            raise RuntimeError(f"cookie文件已失效，请先完成微博登录: {self.account_file}")
+            raise RuntimeError(f"cookiearquivo expirado; conclua antes o ídologin do Weibo: {self.account_file}")
         if not self.title or not str(self.title).strip():
-            raise ValueError("视频标题不能为空")
+            raise ValueError("o título do vídeo não pode ficar vazio")
         if not self.thumbnail_path:
-            raise ValueError("微博视频发布必须提供封面图（--thumbnail）")
+            raise ValueError("Weibo vídeoa publicação exige uma capa (--thumbnail)")
         self.file_path = str(self.validate_video_file(self.file_path))
         self.thumbnail_path = str(self.validate_image_file(self.thumbnail_path))
-        # 封面文件 < 5MB
+        # arquivo da capa < 5MB
         thumb_size = Path(self.thumbnail_path).stat().st_size
         if thumb_size > 5 * 1024 * 1024:
-            raise ValueError(f"封面文件过大（{thumb_size / 1024 / 1024:.1f}MB），微博要求 < 5MB")
+            raise ValueError(f"arquivo de capa grande demais ({thumb_size / 1024 / 1024:.1f}MB), o Weibo exige < 5MB")
 
     async def upload(self, playwright: Playwright) -> None:
-        weibo_logger.info(_msg("🧍", "先检查 cookie 和视频文件"))
+        weibo_logger.info(_msg("🧍", "confere o cookie e o arquivo de vídeo"))
         await self.validate_upload_args()
-        weibo_logger.info(_msg("🥳", "上传前检查通过"))
+        weibo_logger.info(_msg("🥳", "verificação antes do envio concluída"))
 
         browser = await playwright.chromium.launch(**_build_launch_kwargs(headless=self.headless))
         context = await browser.new_context(
             storage_state=self.account_file,
-            viewport={"width": 1280, "height": 2000},  # 高视口，确保发布按钮等在可视区
+            viewport={"width": 1280, "height": 2000},  # janela alta, para o botão de publicarespera na área visível
         )
 
         try:
             page = await context.new_page()
             await page.goto(WEIBO_HOME_URL, timeout=60000, wait_until="domcontentloaded")
             await page.wait_for_timeout(3000)
-            weibo_logger.info(_msg("🏃", f"开始上传视频: {self.title}"))
+            weibo_logger.info(_msg("🏃", f"começando o envio do vídeo: {self.title}"))
 
-            # 1) 点击首页「视频」入口，弹出发布窗口（popup）
+            # 1) clicapágina inicial "vídeo" entrada: abre a janela de publicação (popup)
             publish_page = await self._open_video_publish_page(page)
 
-            # 2) 上传视频文件
+            # 2) envia o arquivo de vídeo
             await self._upload_video_file(publish_page)
 
-            # 3) 等待视频真正上传完成（"上传完成"块可见）
+            # 3) espera envio do vídeo realmente concluído ("envio concluído" bloco visível)
             await self._wait_upload_complete(publish_page)
 
-            # 4) 类型 = 二创（必选）
+            # 4) tipo = conteúdo derivado (obrigatório)
             await self._select_type(publish_page)
 
-            # 5) 内容声明 = 含AI生成内容（必选）
+            # 5) declaração de conteúdo = contém conteúdo gerado por IA (obrigatório)
             await self._select_declaration(publish_page)
 
-            # 6) 填写标题（必填）
+            # 6) preenche o título (obrigatório)
             await self._fill_title(publish_page)
 
-            # 7) 上传封面（必填）
+            # 7) envia a capa (obrigatório)
             await self._upload_thumbnail(publish_page)
 
-            # 8) 合集：选已有，没有则新建（配置了 collection_name 时）
+            # 8) coletânea: usa uma existente ou cria (quando há collection_name configurado)
             if self.collection_name:
                 await self._apply_collection(publish_page)
 
-            # 9) 填写描述（包含标签）
+            # 9) preenche a descrição (com as etiquetas)
             await self._fill_description(publish_page)
 
-            # 10) 点击发布并校验真成功
+            # 10) clicapublica e confere se deu certo
             await self._submit_publish(publish_page)
 
-            # 保存 cookie
+            # salva o cookie
             await context.storage_state(path=self.account_file)
-            weibo_logger.success(_msg("🥳", "cookie 更新完毕"))
+            weibo_logger.success(_msg("🥳", "cookie atualização concluída"))
         finally:
             await context.close()
             await browser.close()
 
     async def _open_video_publish_page(self, page: Page) -> Page:
-        """点击首页「视频」入口，等待 popup 视频发布页。"""
+        """clicapágina inicial" vídeo " entrada: espera o pop-up página de publicação do vídeo."""
         async with page.expect_popup(timeout=30000) as popup_info:
             # 录制脚本：page.locator("span").filter(has_text="视频").click()
             video_btn = page.locator("span").filter(has_text="视频").first
@@ -379,30 +379,30 @@ class WeiBoVideo(BaseVideoUploader):
             await video_btn.click()
         publish_page = await popup_info.value
         await publish_page.wait_for_timeout(3000)
-        weibo_logger.info(_msg("🏃", "已打开视频发布页"))
+        weibo_logger.info(_msg("🏃", "abri o página de publicação do vídeo"))
         return publish_page
 
     async def _upload_video_file(self, page: Page) -> None:
-        """点击「上传视频」按钮并设置文件。"""
+        """clica" enviar vídeo " botãoe define o arquivo."""
         # 录制脚本：page2.get_by_role("button", name="上传视频").click()
         upload_btn = page.get_by_role("button", name="上传视频")
         await upload_btn.wait_for(state="visible", timeout=15000)
 
-        # 通过 file chooser 设置文件
+        # define o arquivo pelo seletor de arquivos
         async with page.expect_file_chooser(timeout=10000) as fc_info:
             await upload_btn.click()
         file_chooser = await fc_info.value
         await file_chooser.set_files(self.file_path)
-        weibo_logger.info(_msg("🏃", f"已选择视频文件: {self.file_path}"))
+        weibo_logger.info(_msg("🏃", f"arquivo de vídeo escolhido: {self.file_path}"))
 
     async def _wait_upload_complete(self, page: Page, timeout: int = 900) -> None:
-        """等待视频真正上传完成。
+        """espera envio do vídeo realmente concluído.
 
-        真实 DOM：上传区有三个并列的 `_info` 块（上传中 / 暂停中 / 上传完成），未到的
-        状态用 `display:none` 隐藏，只有当前状态那块可见：
-          - 上传中：`<span>上传中</span>` + `269.61MB/269.61MB`
-          - 上传完成：`<i class="woo-font woo-font--check">` + `<span>上传完成</span>`
-        以"上传完成"块**变为可见**作为唯一完成判据（三块文字都恒在 DOM 里，不能用文字存在与否判断）。
+        DOM real: a área de envio tem três elementos lado a lado `_info` lado a lado (enviando / pausado / envio concluído), e o que não vale
+        o estado usa `display:none` escondidos; só o do estado atual fica visível:
+          - enviando: `<span>enviando</span>` + `269.61MB/269.61MB`
+          - envio concluído: `<i class="woo-font woo-font--check">` + `<span>envio concluído</span>`
+        o critério é o bloco "envio concluído" **ficar visível** (os três textos ficam sempre no DOM: existir ou não existir não serve de critério).
         """
         start = time.monotonic()
         done = page.locator('div:has(> i.woo-font--check) span:text-is("上传完成")').first
@@ -410,19 +410,19 @@ class WeiBoVideo(BaseVideoUploader):
         last_log = 0.0
         while True:
             if time.monotonic() - start > timeout:
-                raise TimeoutError(f"视频上传超时（>{timeout}s）")
+                raise TimeoutError(f"tempo esgotado no envio do vídeo (>{timeout}s)")
 
             body = ""
             try:
                 body = await page.inner_text("body")
             except Exception:
                 pass
-            if "上传失败" in body:
-                raise RuntimeError("视频上传失败")
+            if "falha no envio" in body:
+                raise RuntimeError("falha no envio do vídeo")
 
             try:
                 if await done.is_visible():
-                    weibo_logger.success(_msg("🥳", "视频上传完毕（'上传完成' 可见）"))
+                    weibo_logger.success(_msg("🥳", "envio do vídeo concluído ('envio concluído' visível)"))
                     return
             except Exception:
                 pass
@@ -430,38 +430,39 @@ class WeiBoVideo(BaseVideoUploader):
             if time.monotonic() - last_log > 5:
                 try:
                     if await uploading.is_visible():
+                        # o "上传中" é o texto da própria página: não traduzir
                         m = re.search(r"上传中[\s\S]{0,60}?([\d.]+)\s*MB\s*/\s*([\d.]+)\s*MB", body)
                         if m:
-                            weibo_logger.info(_msg("🏃", f"上传中 {m.group(1)}/{m.group(2)}MB"))
+                            weibo_logger.info(_msg("🏃", f"enviando {m.group(1)}/{m.group(2)}MB"))
                         else:
-                            weibo_logger.info(_msg("🏃", "上传中…"))
+                            weibo_logger.info(_msg("🏃", "enviando…"))
                 except Exception:
                     pass
                 last_log = time.monotonic()
             await asyncio.sleep(2)
 
     async def _fill_title(self, page: Page) -> None:
-        """填写标题（最长30字）。"""
+        """preenche o título (no máximo 30 caracteres)."""
         title_field = page.get_by_placeholder("填写标题（0～30个字）")
         await title_field.wait_for(state="visible", timeout=15000)
         title = self.title[:self.max_title_length]
         await title_field.click()
         await title_field.fill(title)
-        weibo_logger.info(_msg("🏷️", f"标题已填写: {title}"))
+        weibo_logger.info(_msg("🏷️", f"título preenchido: {title}"))
 
     async def _upload_thumbnail(self, page: Page) -> None:
-        """上传封面（必填）。
+        """envia a capa (obrigatório).
 
-        真实 DOM/坑位：
-          - 主表单 `<a>上传封面</a>` → 弹出「编辑封面」层 `_layer_1mhd8_153`（层内有
-            `input[type=file]._file_1mhd8_65`，可直接 set_input_files）。
-          - **关键坑**：选图后封面要走**服务端裁切**，期间层内显示"裁切处理中/处理中请稍后…"，
-            "完成"按钮此时点了也不生效；而「编辑封面」层开着时，微博会把**主表单层
-            `_layer_19x8d_246` 置为 display:none** → 之后的合集开关/发布按钮全部 0 尺寸点不动。
-          - 因此必须：等裁切处理结束(cropper 出 blob 图且无"处理中"字样) → 点"完成" →
-            **确认编辑封面层已关闭**（否则重试/抛错），主表单才会恢复可见。
+        DOM real e armadilhas:
+          - no formulário principal, `<a>envia a capa</a>` → abre a camada "editar capa" `_layer_1mhd8_153` (dentro dela há
+            `input[type=file]._file_1mhd8_65`, dá para usar set_input_files direto).
+          - **armadilha importante**: escolhida a imagem, a capa passa por**corte no servidor**, nesse tempo a camada mostra " cortando / processando, aguarde…", 
+            "concluído" botãoclicar agora não adianta; e "editar capa" com a camada aberta, o Weibo deixa**camada do formulário principal
+            `_layer_19x8d_246` muda para display:none** → o botão de coletânea e o de publicar que vêm depoisãotodos com tamanho zero: não dá para clicar.
+          - por isso é preciso esperar o corte terminar (o cropper gera a imagem blob e some o texto de "processando") → clica em "concluído" →
+            **confirmareditar capacamada fechada** (senão tenta de novo ou lança erro), só então o formulário principal volta a aparecer.
         """
-        # 打开「上传封面」
+        # abre "envia a capa"
         upload_link = page.get_by_role("link", name="上传封面").first
         if not await upload_link.count():
             upload_link = page.locator('a:has-text("上传封面")').first
@@ -469,36 +470,36 @@ class WeiBoVideo(BaseVideoUploader):
         await upload_link.click()
         await page.wait_for_timeout(1200)
 
-        # 「编辑封面」层
+        # camada "editar capa"
         cover_layer = page.locator('div.wbpro-layer:has(div:text-is("编辑封面"))').first
         await cover_layer.wait_for(state="visible", timeout=15000)
 
-        # 塞封面文件（用 .first 命中可见主输入；.last 会命中隐藏面板里 0 尺寸的裁切器，
-        # 导致"裁切处理中"永久卡住、发不出 picupload 请求）
+        # coloca o arquivo da capa (o .first pega o campo principal visível; o .last pega o cortador de tamanho zero no painel escondido,
+        # resulta em "cortando" trava para sempre e a requisição picupload nunca sai)
         file_input = page.locator('input[type="file"][accept*="jpg"]').first
         await file_input.wait_for(state="attached", timeout=15000)
         await file_input.set_input_files(self.thumbnail_path)
-        weibo_logger.info(_msg("🏃", f"已选择封面图片: {self.thumbnail_path}"))
+        weibo_logger.info(_msg("🏃", f"imagem de capa escolhida: {self.thumbnail_path}"))
 
-        # cropper 本地出图（秒级）
+        # cropper imagem gerada localmente (na casa dos segundos)
         blob_img = page.locator('.cropper-container img[src^="blob:"], .wb_cropper img[src^="blob:"]').first
         try:
             await blob_img.wait_for(state="attached", timeout=20000)
         except PWTimeoutError:
-            weibo_logger.warning(_msg("⚠️", "cropper 未见 blob 图，仍尝试点完成"))
+            weibo_logger.warning(_msg("⚠️", "cropper nenhuma imagem blob à vista; ainda assim clica em concluirído"))
         await page.wait_for_timeout(500)
 
-        # 高容错收尾：裁切时长因图/网络而异，不赌固定时长、不赌某个请求。
-        # 只认**真实结果**——「编辑封面」层是否关闭；期间**周期性重复点"完成"**
-        # （裁切处理中点了无害，处理完的那次点击就会关闭层），并识别裁切/上传报错。
+        # final tolerante: o corte demora conforme a imagem e a rede, então não apostamos em tempo fixo nem numa requisição específica.
+        # só aceita**resultado real**——"editar capa" se a camada fechou; nesse meio-tempo**clica de tempos em tempos "concluído"**
+        #  (clicar durante o corte não faz mal; o clique depois de pronto fecha a camada), e identifica erros de corte ou envio.
         finish_btn = cover_layer.locator('div.wbpro-layer-btn button:has(span:text-is("完成"))').first
         if not await finish_btn.count():
             finish_btn = cover_layer.locator('button:has(span:text-is("完成"))').first
         closed = False
         last_click = 0.0
         start = time.monotonic()
-        while time.monotonic() - start < 300:  # 宽松 5 分钟
-            # 结果判定：编辑封面层不再可见 → 成功
+        while time.monotonic() - start < 300:  # folga de 5 minutos
+            # critério: a camada de edição da capa não está mais visível → deu certo
             try:
                 if not await cover_layer.is_visible():
                     closed = True
@@ -506,15 +507,16 @@ class WeiBoVideo(BaseVideoUploader):
             except Exception:
                 closed = True
                 break
-            # 报错识别（裁切/格式/上传失败）
+            # identificação do erro (falha no corte, no formato ou no envio)
             try:
                 layer_txt = await cover_layer.inner_text()
             except Exception:
                 layer_txt = ""
+            # textos de erro da própria página: não traduzir
             for err in ("裁切失败", "上传失败", "图片格式", "封面上传失败", "重新上传", "格式不支持"):
                 if err in layer_txt:
-                    raise RuntimeError(f"封面裁切/上传失败：{err}")
-            # 周期性点"完成"（每 4s 一次；跳过明确 disabled）
+                    raise RuntimeError(f"falha no corte ou no envio da capa: {err}")
+            # clica periodicamente "concluído" (a cada 4 s; pula os claramente desabilitados)
             if time.monotonic() - last_click > 4:
                 try:
                     if await finish_btn.count() and await finish_btn.is_visible():
@@ -525,22 +527,22 @@ class WeiBoVideo(BaseVideoUploader):
                 last_click = time.monotonic()
             await asyncio.sleep(2)
         if not closed:
-            raise RuntimeError("封面「完成」后编辑封面层长时间(>300s)未关闭，疑似裁切服务异常")
+            raise RuntimeError("depois do concluído da capa, a camada de edição ficou mais de 300 s sem fechar; o serviço de corte parece com problema")
 
-        # 确认主表单层已恢复可见（display 从 none 变回）
+        # confirmaro formulário principal voltou a ficar visível (display volta de none para)
         main_form = page.locator('div.wbpro-layer[class*="_layer_19x8d"]').first
         try:
             await main_form.wait_for(state="visible", timeout=10000)
         except PWTimeoutError:
-            weibo_logger.warning(_msg("⚠️", "封面关闭后主表单未确认可见，继续尝试"))
-        weibo_logger.success(_msg("🖼️", "封面已上传并完成"))
+            weibo_logger.warning(_msg("⚠️", "fechada a capa, o formulário principal não confirmou estar visível; tentando de novo"))
+        weibo_logger.success(_msg("🖼️", "capa enviada e concluiído"))
 
     async def _select_type(self, page: Page) -> None:
-        """类型（必选）：选择「二创」。
+        """tipo (obrigatório): escolher" conteúdo derivado ".
 
-        真实 DOM：`<div class="_type_1vpmt_29">` 下两个
-        `<label class="woo-radio-main"><input type=radio><span class="woo-radio-shadow"><span class="woo-radio-text">二创</span></label>`，
-        选中后对应 `woo-radio-shadow` 追加 `woo-radio-checked`。
+        DOM real: `<div class="_type_1vpmt_29 ">` os dois de baixo
+        `<label class="woo-radio-main"><input type=radio><span class="woo-radio-shadow"><span class="woo-radio-text">conteúdo derivado</span></label>`, 
+        depois de selecionado, o `woo-radio-shadow` acrescenta `woo-radio-checked`.
         """
         label = page.locator('label.woo-radio-main:has(span.woo-radio-text:text-is("二创"))').first
         await label.wait_for(state="visible", timeout=20000)
@@ -549,26 +551,26 @@ class WeiBoVideo(BaseVideoUploader):
 
         checked_sel = 'label.woo-radio-main:has(span.woo-radio-text:text-is("二创")) span.woo-radio-checked'
         if not await page.locator(checked_sel).count():
-            # 兜底：直接勾选 radio input
+            # reserva: marca o radio direto
             try:
                 await label.locator('input.woo-radio-input').check()
                 await page.wait_for_timeout(300)
             except Exception:
                 pass
         if not await page.locator(checked_sel).count():
-            raise RuntimeError("类型「二创」未选中")
-        weibo_logger.info(_msg("🏷️", "类型已选：二创"))
+            raise RuntimeError("tipo'conteúdo derivado'não selecionado")
+        weibo_logger.info(_msg("🏷️", "tipoescolhido: conteúdo derivado"))
 
     async def _select_declaration(self, page: Page) -> None:
-        """内容声明（必选）：选择「含AI生成内容」。
+        """declaração de conteúdo (obrigatório): escolher" contém conteúdo gerado por IA ".
 
-        真实 DOM：
-          - 触发下拉：`<div class="_gap1_nsgmr_26">` 内 `.woo-pop-ctrl`（带 caretDown 的 wbpro-select）
-          - 弹层：`<div class="_panel_nsgmr_114">`，选项 `<button class="_option..."><span class="_optionLabel...">含AI生成内容</span></button>`
-          - 选中后该 button 内 `._check_nsgmr_237` 追加 `_checkActive_nsgmr_251`（带 _checkMark）
-          - 底部 `._footer_nsgmr_270 button`（"确定"）关闭弹层
+        DOM real: 
+          - abre a lista: o `.woo-pop-ctrl` dentro de `<div class="_gap1_nsgmr_26 ">` (o wbpro-select com caretDown)
+          - camada: `<div class="_panel_nsgmr_114 ">`, opção `<button class="_option..."><span class="_optionLabel...">contém conteúdo gerado por IA</span></button>`
+          - depois de selecionado, dentro desse botão `._check_nsgmr_237` acrescenta `_checkActive_nsgmr_251` (com _checkMark)
+          - fim `._footer_nsgmr_270 button` ("confirmar")fecha a camada
         """
-        # 打开下拉
+        # abre a lista
         trigger = page.locator('div[class*="_gap1_nsgmr"] .woo-pop-ctrl').first
         if not await trigger.count():
             trigger = page.locator('div:has(> div[class*="_tit1_nsgmr"]) .woo-pop-ctrl').first
@@ -591,31 +593,31 @@ class WeiBoVideo(BaseVideoUploader):
         await ai_opt.click()
         await page.wait_for_timeout(500)
 
-        # 校验选中态
+        # confere se ficou selecionado
         if not await ai_opt.locator('[class*="_checkActive"]').count():
-            weibo_logger.warning(_msg("⚠️", "内容声明「含AI生成内容」疑似未激活，仍尝试点确定"))
+            weibo_logger.warning(_msg("⚠️", "a declaração de conteúdo gerado por IA parece inativa; ainda assim vou confirmar"))
 
-        # 点确定关闭弹层
+        # clica em confirmar para fechar a camada
         confirm = scope.locator('div[class*="_footer_nsgmr"] button:has(span:text-is("确定"))').first
         if not await confirm.count():
             confirm = scope.locator('button:has(span:text-is("确定"))').last
         if await confirm.count():
             await confirm.click()
             await page.wait_for_timeout(500)
-        weibo_logger.info(_msg("🏷️", "内容声明已选：含AI生成内容"))
+        weibo_logger.info(_msg("🏷️", "declaração de conteúdoescolhido: contém conteúdo gerado por IA"))
 
     async def _fill_description(self, page: Page) -> None:
-        """填写描述区域（正文 + 标签）。
+        """preenche a descriçãoárea (corpo do texto + etiquetas).
 
-        微博描述区 placeholder: "有什么新鲜事想分享给大家？"
-        标签用 #话题# 格式插入到描述末尾。
+        descrição do Weiboçãoplaceholder da área: " O que você quer compartilhar?"
+        as etiquetas entram no fim da descrição no formato #hashtag#.
         """
         desc_field = page.get_by_placeholder("有什么新鲜事想分享给大家？")
         if not await desc_field.count():
-            weibo_logger.warning(_msg("⚠️", "未找到描述输入框"))
+            weibo_logger.warning(_msg("⚠️", "não achei a descriçãocampo de texto"))
             return
 
-        # 组装描述内容：正文 + 标签
+        # monta a descriçãoconteúdo: corpo do texto + etiquetas
         content = self.desc
         if self.tags:
             tag_str = " ".join(f"#{t}#" for t in self.tags)
@@ -624,21 +626,21 @@ class WeiBoVideo(BaseVideoUploader):
         if content:
             await desc_field.click()
             await desc_field.fill(content)
-            weibo_logger.info(_msg("📝", f"描述已填写（{len(content)}字）"))
+            weibo_logger.info(_msg("📝", f"descrição preenchida ({len(content)} caracteres)"))
 
     async def _apply_collection(self, page: Page) -> None:
-        """合集：选已有，没有则新建。
+        """coletânea: usa uma existente ou cria.
 
-        真实 DOM：打开「合集」开关后出现合集面板 `._scroll_19x8d_143`——已有合集每行一个
-        `woo-checkbox` + 只读 `input value="名字(共N集)"`；末尾 `._add_19x8d_63`（「新建合集」）。
-          - 已有：勾选名字匹配（去掉"(共N集)"后缀后）那一行的 checkbox。
-          - 没有：点「新建合集」→ 新增一行(自动勾选)且带可编辑 input → 填合集名(≤12)。
+        DOM real: abre "coletânea" ligado, o painel de coletâneas aparece `._scroll_19x8d_143`——uma coletânea existente por linha
+        `woo-checkbox` + somente leitura `input value=" nome(N episódios)"`; fim `._add_19x8d_63` ("nova coletânea").
+          - existente: marca a que tem o nome igual (remove "(N episódios)" depois do sufixo)o checkbox daquela linha.
+          - sem ela: clica "nova coletânea"→ adiciona uma linha(marca sozinho)e com um campo editável → preenche o nome da coletânea(≤12).
         """
         target = (self.collection_name or "").strip()
         if not target:
             return
 
-        # 1) 打开合集开关
+        # 1) liga a coletânea
         block = page.locator('div[class*="_switch_"]:has(div[class*="_tit1_"]:text-is("合集"))').first
         if not await block.count():
             block = page.locator('div:has(> div:text-is("合集")):has(label.woo-switch-main)').first
@@ -667,19 +669,19 @@ class WeiBoVideo(BaseVideoUploader):
                     except Exception:
                         break
         except Exception as exc:
-            weibo_logger.warning(_msg("⚠️", f"打开合集开关异常，仍尝试找面板: {exc}"))
+            weibo_logger.warning(_msg("⚠️", f"erro ao ligar a coletânea; ainda assim procuro o painel: {exc}"))
 
-        # 2) 合集面板
+        # 2) painel de coletâneas
         panel = page.locator('div[class*="_scroll_"]:has(div[class*="_add_"])').first
         if not await panel.count():
             panel = page.locator('div:has(> div[class*="_add_"]:has-text("新建合集"))').first
         try:
             await panel.wait_for(state="visible", timeout=8000)
         except PWTimeoutError:
-            weibo_logger.warning(_msg("⚠️", "未见合集面板，跳过合集"))
+            weibo_logger.warning(_msg("⚠️", "o painel de coletâneas não apareceu; seguindo sem ela"))
             return
 
-        # 3) 匹配已有合集（去掉"(共N集)"后缀）
+        # 3) casa com uma coletânea existente (remove "(N episódios)" sufixo)
         rows = panel.locator('div[class*="_top2_"]')
         n = await rows.count()
         matched = False
@@ -694,21 +696,21 @@ class WeiBoVideo(BaseVideoUploader):
                 await row.locator('label.woo-checkbox-main').first.click()
                 await page.wait_for_timeout(400)
                 matched = True
-                weibo_logger.info(_msg("🥳", f"已选已有合集：{target}"))
+                weibo_logger.info(_msg("🥳", f"coletânea existente escolhida: {target}"))
                 break
 
-        # 4) 没有则新建（best-effort：新建失败只跳过合集，绝不中断发布）
+        # 4) se não houver, cria (best-effort: se criar falhar, apenas segue sem coletânea, nunca interrompe a publicação)
         if not matched:
             try:
                 add_btn = panel.locator('div[class*="_add_"]:has-text("新建合集")').first
                 if not await add_btn.count():
                     add_btn = page.locator('div:has-text("新建合集")').last
-                # 「新建合集」整行 598px 宽、可点的"＋新建合集"文字在左侧；点整行几何中心会落到
-                # 右侧空白、不触发。改为点内部"新建合集"文字 span（在左侧、必命中 onClick）。
+                # "nova coletânea" a linha tem 598px de largura e a parte clicável "＋nova coletânea " o texto fica à esquerda; clicar no centro da linha cai
+                # à direita é vazia e não dispara; passamos a clicar no interior "nova coletânea" span de texto (fica à esquerda e sempre dispara o onClick).
                 add_target = add_btn.get_by_text("新建合集", exact=True).first
                 if not await add_target.count():
                     add_target = add_btn
-                # 新建行的可编辑 input（已有行的 input 都带 disabled，新建行的没有）
+                # o campo editável da linha nova (os campos das linhas existentes vêm desabilitados; os da linha nova, não)
                 new_inp = panel.locator('div[class*="_top2_"] input[type="text"]:not([disabled])').last
                 created = False
                 for _ in range(3):
@@ -731,28 +733,28 @@ class WeiBoVideo(BaseVideoUploader):
                         created = True
                         break
                 if not created:
-                    weibo_logger.warning(_msg("⚠️", f"「新建合集」未出现输入行，跳过合集继续发布：{target[:12]}"))
+                    weibo_logger.warning(_msg("⚠️", f"a linha de digitação da nova coletânea não apareceu: seguindo sem coletânea ({target[:12]})"))
                     return
                 await new_inp.click()
                 await new_inp.fill(target[:12])
                 await page.wait_for_timeout(500)
-                weibo_logger.info(_msg("🥳", f"已新建合集：{target[:12]}"))
+                weibo_logger.info(_msg("🥳", f"nova coletânea: {target[:12]}"))
             except Exception as exc:
-                weibo_logger.warning(_msg("⚠️", f"新建合集失败，跳过合集继续发布：{exc}"))
+                weibo_logger.warning(_msg("⚠️", f"nova coletâneafalhou: seguindo sem coletâneação: {exc}"))
                 return
 
     async def _submit_publish(self, page: Page) -> None:
-        """点击发布并校验真成功。
+        """clicapublica e confere se deu certo de verdade.
 
-        真实 DOM：
-          - 发布按钮：`._check_2z30i_81 button`（内容"发布"）。按钮中心可能被空 div 覆盖，
-            用 JS 触发按钮自身 click 绕过遮罩。
-          - 成功唯一可靠判据：隐藏成功层 `_layer1_9a8j7_2` 由 `display:none` 变**可见**，
-            其中含"再发一条视频"按钮 → 用它/该按钮可见判定真成功。
-            （"视频已上传成功，将在转码后发布"文字是恒存在的隐藏模板，不能作判据。）
-          - 60s 内判不到成功 → 抛错（不再冒充成功），交由上层记失败。
+        DOM real: 
+          - botão de publicar: `._check_2z30i_81 button` (conteúdo "publicar").botãoo centro pode estar coberto por uma div vazia,
+            dispara o botão por JSãoo próprio click contorna a camada.
+          - o único critério confiável de sucesso: a camada de sucesso `_layer1_9a8j7_2` sai de `display:none` e **fica visível**,
+            contendo "publica outro vídeo" botão → usa ele ou esse botãovisível: sucesso confirmado.
+             ("vídeoenviado; será publicado após a conversão" esse texto é um modelo escondido que existe sempre: não serve de critério.)
+          - 60s não consegui confirmar o sucesso dentro do prazo → lança erro (não finge mais sucesso), deixa o nível de cima registrar a falha.
         """
-        # 关掉可能残留的下拉/弹层
+        # fecha listas e camadas que tenham sobrado
         try:
             await page.keyboard.press("Escape")
             await page.wait_for_timeout(300)
@@ -764,7 +766,7 @@ class WeiBoVideo(BaseVideoUploader):
             publish_btn = page.get_by_role("button", name="发布").first
         await publish_btn.wait_for(state="visible", timeout=15000)
         await publish_btn.evaluate("el => el.click()")
-        weibo_logger.info(_msg("🏃", "已点击发布按钮(JS)"))
+        weibo_logger.info(_msg("🏃", "cliquei no botão de publicar(JS)"))
 
         success_layer = page.locator('div[class*="_layer1_9a8j7"]').first
         again_btn = page.locator('button:has(span:text-is("再发一条视频"))').first
@@ -772,31 +774,32 @@ class WeiBoVideo(BaseVideoUploader):
         while time.monotonic() - start < 60:
             try:
                 if await again_btn.is_visible():
-                    weibo_logger.success(_msg("🥳", "视频发布成功（出现「再发一条视频」）"))
+                    weibo_logger.success(_msg("🥳", "vídeo publicado (apareceu o botão de publicar outro vídeo)"))
                     return
             except Exception:
                 pass
             try:
                 if await success_layer.is_visible():
-                    weibo_logger.success(_msg("🥳", "视频发布成功（成功层可见）"))
+                    weibo_logger.success(_msg("🥳", "vídeo publicado (camada de sucesso visível)"))
                     return
             except Exception:
                 pass
-            # 处理可能的二次确认对话框
+            # trata a possível janela de segunda confirmação
             try:
                 dialog = page.locator('.woo-dialog-main, .woo-modal-wrap, [class*="Dialog"]').first
                 if await dialog.count() and await dialog.is_visible():
+                    # nomes dos botões na própria página: não traduzir
                     for name in ("确定", "确认", "继续", "仍然发布", "发布"):
                         cb = dialog.locator(f'button:has(span:text-is("{name}"))').first
                         if await cb.count() and await cb.is_visible():
                             await cb.evaluate("el => el.click()")
-                            weibo_logger.info(_msg("🏃", f"已确认对话框：{name}"))
+                            weibo_logger.info(_msg("🏃", f"janela confirmada: {name}"))
                             break
             except Exception:
                 pass
             await page.wait_for_timeout(1500)
 
-        raise RuntimeError("发布后 60s 未见成功层/「再发一条视频」，判定发布未成功（未入库）")
+        raise RuntimeError("60 s depois de publicar, nem a camada de sucesso nem o botão de publicar outro vídeo apareceram: a publicação não deu certo (nada foi para o banco)")
 
     async def main(self):
         async with async_playwright() as playwright:

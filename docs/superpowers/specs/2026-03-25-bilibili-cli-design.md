@@ -1,48 +1,48 @@
-# Bilibili CLI 设计
+# Projeto da CLI do Bilibili
 
-日期：2026-03-25
+Data: 2026-03-25
 
-## 概要
+## Resumo
 
-这份设计要把 `bilibili` 挂到 `sau` 下面，用户侧体验尽量和现在的 `douyin`、`kuaishou` 保持一致。
+Este projeto coloca o `bilibili` embaixo do `sau`, com uma experiência o mais parecida possível com a de `douyin` e `kuaishou`.
 
-核心约束只有两个：
+Só há duas restrições centrais:
 
-- 用户不需要自己安装 `biliup`
-- 外部统一走 `sau bilibili ...`
+- o usuário não precisa instalar o `biliup`
+- por fora, tudo passa por `sau bilibili ...`
 
-程序会把 `biliup` 当作内部运行时依赖来处理：
+O programa trata o `biliup` como uma dependência interna de execução:
 
-- `sau bilibili ...` 是唯一公开入口
-- 本地没有 `biliup` 时自动下载
-- 每次运行都检查 GitHub Release 最新版本
-- 如果发现有更新，先自动更新，再继续执行当前命令
+- `sau bilibili ...` é a única entrada pública
+- sem o `biliup` na máquina, ele é baixado sozinho
+- toda execução confere a versão mais nova no GitHub Release
+- havendo atualização, ela é aplicada antes de o comando seguir
 
-这份设计刻意保持轻量，不重新发明一套 B 站上传语义，而是直接复用仓库里现有的 B 站上传模型。
+O projeto é propositalmente leve: não reinventa a semântica de envio ao Bilibili, e sim reaproveita o modelo que já existe no repositório.
 
-## 目标
+## Objetivos
 
-- 让 `sau bilibili ...` 和 `sau douyin ...`、`sau kuaishou ...` 保持统一心智
-- 隐藏 `biliup` 的安装细节，降低用户使用成本
-- 复用项目里已经存在的账号文件、`VideoZoneTypes`、定时发布等能力
-- 不做过度封装
+- deixar `sau bilibili ...` com a mesma lógica de `sau douyin ...` e `sau kuaishou ...`
+- esconder os detalhes de instalação do `biliup`, reduzindo o custo de uso
+- reaproveitar o que já existe: arquivos de conta, `VideoZoneTypes`, publicação agendada
+- não empacotar demais
 
-## 非目标
+## Fora do escopo
 
-- 第一版不把 `biliup` 二进制直接提交进仓库
-- 第一版不维护本地 release manifest
-- 第一版不做 B 站图文发布
-- 第一版不重做现有的 B 站上传领域模型
+- a primeira versão não coloca o binário do `biliup` dentro do repositório
+- a primeira versão não mantém um manifesto local de releases
+- a primeira versão não faz post de imagens no Bilibili
+- a primeira versão não refaz o modelo de envio que já existe
 
-## 当前项目基础
+## O que o projeto já tem
 
-仓库里已经有 B 站上传能力：
+O repositório já sabe enviar vídeos ao Bilibili:
 
-- `uploader/bilibili_uploader/main.py` 目前直接封装了 `biliup.plugins.bili_webup`
-- `examples/upload_video_to_bilibili.py` 已经在使用现有上传参数
-- `utils/constant.py` 已经定义了完整的 `VideoZoneTypes`
+- `uploader/bilibili_uploader/main.py` embrulha diretamente o `biliup.plugins.bili_webup`
+- `examples/upload_video_to_bilibili.py` já usa os parâmetros de envio atuais
+- `utils/constant.py` já define os `VideoZoneTypes` completos
 
-也就是说，你现在项目里的 B 站上传语义已经很明确，核心就是：
+Ou seja, a semântica de envio ao Bilibili já está clara, e no centro dela estão:
 
 - `file`
 - `title`
@@ -51,229 +51,229 @@
 - `tags`
 - `dtime`
 
-所以第一版 CLI 不需要重新造模型，直接沿用这套。
+Então a primeira versão da CLI não precisa de um modelo novo: usa esse mesmo.
 
-## 用户侧 CLI 设计
+## Desenho da CLI
 
-### 支持的命令
+### Comandos
 
 - `sau bilibili login`
 - `sau bilibili check`
 - `sau bilibili upload-video`
 
-### 命令契约
+### Contrato dos comandos
 
 #### `sau bilibili login`
 
-作用：
+O que faz:
 
-- 自动准备 `biliup`
-- 如果有更新则先升级
-- 然后调用 `biliup` 完成登录
-- 将账号数据按项目自己的账号文件规则保存下来
+- prepara o `biliup`
+- atualiza, se houver versão nova
+- chama o `biliup` para fazer o login
+- salva os dados da conta seguindo a regra de arquivos de conta do projeto
 
-第一版行为：
+Comportamento na primeira versão:
 
-- 本地没有 `biliup` 时自动下载最新 release
-- 本地已有但上游有更新时自动升级
-- 升级完成后继续执行登录流程
+- sem o `biliup` na máquina, baixa a release mais nova
+- com o `biliup` desatualizado, atualiza
+- terminada a atualização, segue com o login
 
 #### `sau bilibili check`
 
-作用：
+O que faz:
 
-- 自动准备 `biliup`
-- 检查当前账号是否可用
+- prepara o `biliup`
+- confere se a conta atual está utilizável
 
-第一版行为：
+Comportamento na primeira versão:
 
-- 结合本地账号文件存在性和 `biliup` 实际可用性来判断
-- 输出风格和其他平台保持一致：
+- decide juntando a existência do arquivo de conta e o resultado real do `biliup`
+- a saída segue o padrão das outras plataformas:
   - `valid`
   - `invalid`
 
 #### `sau bilibili upload-video`
 
-作用：
+O que faz:
 
-- 自动准备 `biliup`
-- 走项目当前已有的 B 站上传参数体系完成视频上传
+- prepara o `biliup`
+- envia o vídeo usando os parâmetros de envio que o projeto já tem
 
-第一版参数：
+Parâmetros da primeira versão:
 
-- `--account` 必填
-- `--file` 必填
-- `--title` 必填
-- `--desc` 必填
-- `--tid` 必填
-- `--tags` 选填
-- `--schedule` 选填
+- `--account` obrigatório
+- `--file` obrigatório
+- `--title` obrigatório
+- `--desc` obrigatório
+- `--tid` obrigatório
+- `--tags` opcional
+- `--schedule` opcional
 
-明确决定：
+Decisão explícita:
 
-- `tid` 在第一版里必须传
-- 不给默认分区，避免猜测和隐式错误
+- o `tid` é obrigatório nesta primeira versão
+- não há categoria padrão, para não haver adivinhação nem erro silencioso
 
-## 运行时依赖策略
+## Estratégia da dependência de execução
 
-### 选定方案
+### Solução escolhida
 
-`biliup` 不提交进仓库，也不要求用户手工安装。
+O `biliup` não entra no repositório e também não exige instalação manual.
 
-`sau bilibili ...` 在运行时自动处理它：
+O `sau bilibili ...` cuida dele em tempo de execução:
 
-1. 查找本地是否已有 `biliup`
-2. 检查 GitHub Release 最新版本
-3. 如果缺失或过期，则自动下载最新版本
-4. 替换本地运行时副本
-5. 继续执行本次命令
+1. procura o `biliup` na máquina
+2. confere a versão mais nova no GitHub Release
+3. se faltar ou estiver velho, baixa a mais nova
+4. substitui a cópia local
+5. segue com o comando atual
 
-### 选择这个方案的原因
+### Por que essa solução
 
-- 仓库体积更干净
-- 用户不需要自己找 release、自己下载
-- 对外仍然只有一个统一入口 `sau`
-- 不需要使用 `git submodule`
+- o repositório fica mais limpo
+- o usuário não precisa caçar e baixar a release
+- por fora continua havendo uma entrada única, o `sau`
+- não é preciso usar `git submodule`
 
-### 接受的代价
+### O preço aceito
 
-这套方案明确接受一个现实：
+A solução assume um fato:
 
-- 每次运行都会检查上游 release
-- 上游如果改 CLI 行为，可能会影响这层适配
+- toda execução consulta a release de origem
+- se o comportamento da ferramenta mudar lá em cima, essa camada é afetada
 
-所以这里的应对方式不是做重封装，而是保持 wrapper 很薄，减少被动维护成本。
+Por isso a resposta não é embrulhar mais, e sim manter o wrapper fino, reduzindo a manutenção reativa.
 
-## 存储与解析
+## Armazenamento e resolução
 
-`biliup` 应该存放在本地运行时缓存目录中，而不是源码目录中。
+O `biliup` deve ficar num diretório de cache de execução, não no diretório do código-fonte.
 
-缓存目录只需要满足：
+O diretório de cache só precisa:
 
-- 当前用户可写
-- 可跨命令复用
-- 不进入 git 管理
+- ter permissão de escrita para o usuário atual
+- ser reaproveitável entre comandos
+- ficar fora do git
 
-解析器的职责应当是：
+O resolvedor deve:
 
-- 识别当前操作系统
-- 选择对应平台的 release asset
-- 下载并替换可执行文件
-- 返回最终可执行路径
+- identificar o sistema operacional
+- escolher o asset da release correspondente
+- baixar e substituir o executável
+- devolver o caminho final do executável
 
-## 轻量封装边界
+## Limites do encapsulamento
 
-为了避免过度封装，第一版只建议拆成 3 个很薄的部分。
+Para não exagerar, a primeira versão se divide em três partes bem finas.
 
 ### 1. Resolver
 
-职责：
+Responsabilidade:
 
-- 判断本地是否已有 `biliup`
-- 检查 GitHub Release 最新版本
-- 下载或更新可执行文件
-- 返回最终可执行文件路径
+- ver se o `biliup` já está na máquina
+- conferir a versão mais nova no GitHub Release
+- baixar ou atualizar o executável
+- devolver o caminho final do executável
 
 ### 2. Runner
 
-职责：
+Responsabilidade:
 
-- 调用解析出来的 `biliup`
-- 收集退出码、标准输出、标准错误
-- 对明显的进程级错误做一层项目内友好的报错转换
+- chamar o `biliup` resolvido
+- coletar código de saída, saída padrão e saída de erro
+- converter os erros mais evidentes de processo em mensagens amigáveis do projeto
 
-### 3. `sau_cli.py` 中的 bilibili 子命令
+### 3. Subcomando bilibili no `sau_cli.py`
 
-职责：
+Responsabilidade:
 
-- 解析 `sau bilibili ...` 参数
-- 把这些参数翻译成底层运行逻辑
-- 让帮助信息风格和其他平台一致
+- interpretar os parâmetros de `sau bilibili ...`
+- traduzi-los para a lógica de execução de baixo nível
+- manter o texto de ajuda no mesmo estilo das outras plataformas
 
-第一版不需要更多层，也不需要再抽一套很重的统一框架。
+A primeira versão não precisa de mais camadas nem de um framework unificado e pesado.
 
-## 与现有项目概念的映射
+## Correspondência com o que já existe
 
-### 账号文件
+### Arquivos de conta
 
-B 站也继续沿用现在项目的账号别名机制：
+O Bilibili continua usando o mecanismo de apelido de conta do projeto:
 
-- 用户传 `--account <name>`
-- 程序解析成对应的账号文件路径
+- o usuário passa `--account <name>`
+- o programa resolve o caminho do arquivo de conta
 
-### 分区
+### Categoria
 
-`tid` 保持为一等参数。
+O `tid` continua sendo parâmetro de primeira classe.
 
-`VideoZoneTypes` 继续保留并服务于：
+Os `VideoZoneTypes` seguem existindo e servindo para:
 
-- example
-- 文档
-- 后续可能的辅助工具
+- os exemplos
+- a documentação
+- possíveis ferramentas auxiliares
 
-### 定时发布
+### Publicação agendada
 
-`--schedule` 保持和当前 `sau` 其他平台一致的使用方式：
+O `--schedule` funciona como nas outras plataformas do `sau`:
 
-- 不传就是立即发布
-- 传了就是定时发布
+- sem ele, publica na hora
+- com ele, publica agendado
 
-具体如何映射到底层 B 站执行逻辑，由 adapter 负责，不暴露给用户。
+Como isso vira a execução real no Bilibili é problema do adaptador, não do usuário.
 
-## 错误处理
+## Tratamento de erros
 
-第一版错误处理保持直接，不做花哨包装：
+A primeira versão trata erros de forma direta, sem enfeite:
 
-- 下载失败：明确告诉用户自动下载 `biliup` 失败
-- 更新失败：明确告诉用户最新 release 准备失败
-- 登录失败：保留 `biliup` 登录失败上下文
-- 检查失败：输出 `invalid`
-- 上传失败：返回非零退出码，并展示上游错误摘要
+- falha no download: diz claramente que o download automático do `biliup` falhou
+- falha na atualização: diz claramente que não deu para preparar a release mais nova
+- falha no login: mantém o contexto de erro do `biliup`
+- falha na checagem: imprime `invalid`
+- falha no envio: devolve código de saída diferente de zero e mostra o resumo do erro de origem
 
-第一版不追求把所有 `biliup` 错误文本都重新翻译一遍。
+A primeira versão não tenta traduzir todo texto de erro do `biliup`.
 
-## 文档影响范围
+## Documentação afetada
 
-实现完成后，至少需要补齐这些地方：
+Concluída a implementação, é preciso atualizar pelo menos:
 
 - `README.md`
 - `docs/CLI.md`
-- 安装与更新文档
-- 一套对应的 Bilibili skill
-- Bilibili example 脚本
+- os documentos de instalação e atualização
+- uma skill de Bilibili correspondente
+- um script de exemplo do Bilibili
 
-对外表达应当统一成：
+A mensagem para fora deve ser sempre a mesma:
 
-- 用户使用的是 `sau bilibili ...`
-- `biliup` 由程序自动准备
+- o usuário usa `sau bilibili ...`
+- o `biliup` é preparado pelo programa
 
-## 测试策略
+## Estratégia de teste
 
-第一版最少需要验证这些路径：
+A primeira versão precisa verificar pelo menos:
 
 - `sau bilibili login --account <name>`
 - `sau bilibili check --account <name>`
 - `sau bilibili upload-video ...`
-- 本地没有 `biliup` 时能自动下载
-- 本地已有旧版本时能先升级再执行
-- 本地已有最新版本时能直接复用
+- baixar o `biliup` quando ele não existe na máquina
+- atualizar antes de executar quando a versão local está velha
+- reaproveitar direto quando a versão local já é a mais nova
 
-因为登录和上传涉及真实外部平台，第一版以手工验证为主是可以接受的。
+Como login e envio envolvem uma plataforma externa de verdade, verificação manual é aceitável nesta primeira versão.
 
-## 推荐实现顺序
+## Ordem sugerida de implementação
 
-1. 在 `sau_cli.py` 中加入 `bilibili` 子命令
-2. 增加一个最小可用的 `biliup` resolver
-3. 增加一个最小可用的 `biliup` runner
-4. 接上 `login / check / upload-video`
-5. 补文档、example、skill
+1. adicionar o subcomando `bilibili` no `sau_cli.py`
+2. criar um resolvedor mínimo do `biliup`
+3. criar um executor mínimo do `biliup`
+4. ligar `login / check / upload-video`
+5. escrever documentação, exemplo e skill
 
-## 最终结论
+## Conclusão
 
-- 对外入口固定为 `sau bilibili ...`
-- 第一版支持 `login`、`check`、`upload-video`
-- `tid` 必填
-- `biliup` 不需要用户手动安装
-- 每次运行都检查 GitHub Release
-- 有新版本时先自动更新，再继续执行
-- 整体实现保持轻量，不做过度封装
+- a entrada pública é `sau bilibili ...`
+- a primeira versão cobre `login`, `check` e `upload-video`
+- o `tid` é obrigatório
+- o usuário não precisa instalar o `biliup`
+- toda execução confere o GitHub Release
+- havendo versão nova, ela é aplicada antes de o comando seguir
+- a implementação fica leve, sem encapsulamento demais

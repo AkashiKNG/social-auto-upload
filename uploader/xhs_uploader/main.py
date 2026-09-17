@@ -19,7 +19,7 @@ def sign_local(uri, data=None, a1="", web_session=""):
                 stealth_js_path = pathlib.Path(BASE_DIR / "utils/stealth.min.js")
                 chromium = playwright.chromium
 
-                # 如果一直失败可尝试设置成 False 让其打开浏览器，适当添加 sleep 可查看浏览器状态
+                # se falhar sempre, ponha False para abrir o navegador; um sleep ajuda a ver o que acontece
                 browser = chromium.launch(headless=LOCAL_CHROME_HEADLESS)
 
                 browser_context = browser.new_context()
@@ -30,7 +30,7 @@ def sign_local(uri, data=None, a1="", web_session=""):
                     {'name': 'a1', 'value': a1, 'domain': ".xiaohongshu.com", 'path': "/"}]
                 )
                 context_page.reload()
-                # 这个地方设置完浏览器 cookie 之后，如果这儿不 sleep 一下签名获取就失败了，如果经常失败请设置长一点试试
+                # depois de definir o cookie no navegador é preciso um sleep aqui, senão a assinatura falha; se falhar muito, aumente o tempo
                 sleep(2)
                 encrypt_params = context_page.evaluate("([url, data]) => window._webmsxyw(url, data)", [uri, data])
                 return {
@@ -38,13 +38,13 @@ def sign_local(uri, data=None, a1="", web_session=""):
                     "x-t": str(encrypt_params["X-t"])
                 }
         except Exception:
-            # 这儿有时会出现 window._webmsxyw is not a function 或未知跳转错误，因此加一个失败重试趴
+            # às vezes aparece "window._webmsxyw is not a function" ou uma navegação inesperada, por isso a repetição
             pass
-    raise Exception("重试了这么多次还是无法签名成功，寄寄寄")
+    raise Exception("tentei várias vezes e a assinatura não saiu")
 
 
 def sign(uri, data=None, a1="", web_session=""):
-    # 填写自己的 flask 签名服务端口地址
+    # ponha aqui o endereço do seu serviço flask de assinatura
     res = requests.post(f"{XHS_SERVER}/sign",
                         json={"uri": uri, "data": data, "a1": a1, "web_session": web_session})
     signs = res.json()

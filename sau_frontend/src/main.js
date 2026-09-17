@@ -9,7 +9,7 @@ import './styles/index.scss'
 
 const app = createApp(App)
 
-// 注册 Element Plus 图标
+// registra os ícones do Element Plus
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
 }

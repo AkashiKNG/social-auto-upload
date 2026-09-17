@@ -1,6 +1,6 @@
-# CLI 使用说明
+# Guia da CLI
 
-项目现在提供一个统一的 CLI 入口 `sau`，当前主线已经接入：
+O projeto tem uma CLI única, o comando `sau`. As plataformas já integradas são:
 
 - `douyin`
 - `kuaishou`
@@ -13,27 +13,27 @@
 - `hupu`
 - `youtube`
 
-实现说明：
+Sobre a implementação:
 
-- `sau_cli.py` 是当前 CLI 的主入口和唯一主要实现文件
-- `sau.exe` 是安装后在 Windows 虚拟环境里自动生成的命令入口，本质上还是调用 `sau_cli.py`
-- 如果需要给 OpenClaw、Codex 等 agent 使用，可参考仓库内 skill：
+- `sau_cli.py` é a entrada principal da CLI e o único arquivo de implementação relevante
+- `sau.exe` é o atalho gerado no ambiente virtual do Windows depois da instalação; no fundo ele chama o `sau_cli.py`
+- Para uso com agentes (OpenClaw, Codex e afins), veja as skills do próprio repositório:
   - `skills/douyin-upload/`
   - `skills/kuaishou-upload/`
   - `skills/xiaohongshu-upload/`
   - `skills/bilibili-upload/`
 
-视频号、百家号和支付宝生活号目前只有 CLI 入口，暂未提供对应的 skill。
+Channels (视频号), Baijiahao e a conta de vida do Alipay só têm entrada pela CLI: ainda não existe skill para eles.
 
-## 安装 CLI 入口
+## Instalar o comando `sau`
 
-如果你希望直接使用 `sau` 命令，而不是手动执行 `python sau_cli.py`，先在项目根目录安装一次：
+Se você quiser usar o comando `sau` direto, em vez de rodar `python sau_cli.py`, instale uma vez na raiz do projeto:
 
 ```bash
 uv pip install -e .
 ```
 
-安装后就可以直接使用：
+Depois disso é só usar:
 
 ```bash
 sau douyin --help
@@ -48,168 +48,168 @@ sau hupu --help
 sau youtube --help
 ```
 
-## 安装 patchright 浏览器
+## Instalar o navegador do patchright
 
-Windows 下推荐先指定镜像，再安装 Chromium：
+No Windows vale apontar um espelho antes de instalar o Chromium:
 
 ```powershell
 $env:PLAYWRIGHT_DOWNLOAD_HOST="https://npmmirror.com/mirrors/playwright"; patchright install chromium
 ```
 
-## 抖音 CLI 子命令
+## Subcomandos do Douyin
 
 ```bash
 sau douyin login --account <account_name>
 sau douyin login --account <account_name> --headless
 sau douyin check --account <account_name>
-sau douyin upload-video --account <account_name> --file videos/demo.mp4 --title "示例标题" --desc "示例简介" --tags 运动,训练
-sau douyin upload-note --account <account_name> --images videos/1.png videos/2.png --title "图文标题" --note "图文示例" --tags 图文,测试
+sau douyin upload-video --account <account_name> --file videos/demo.mp4 --title "Título de exemplo" --desc "Descrição de exemplo" --tags esporte,treino
+sau douyin upload-note --account <account_name> --images videos/1.png videos/2.png --title "Título do post" --note "Post de exemplo" --tags post,teste
 ```
 
-抖音短信验证码补充说明：
+Sobre o código por SMS do Douyin:
 
-- 视频发布过程中如果触发短信二次验证，CLI 会优先读取项目根目录下的 `verify_code.txt`
-- 如果未找到 `verify_code.txt`，并且当前命令是在交互式终端中手动运行，CLI 会直接在终端提示输入验证码
-- 对 agent、自动任务、远程桥接这类场景，仍然可以继续用写入 `verify_code.txt` 的方式喂验证码
-- 验证通过后，程序会自动清理 `verify_code.txt`
+- Se a publicação do vídeo disparar a verificação por SMS, a CLI lê primeiro o `verify_code.txt` na raiz do projeto
+- Sem o `verify_code.txt`, e estando num terminal interativo, a CLI pede o código direto no terminal
+- Para agentes, tarefas automáticas e pontes remotas, continua valendo escrever o código no `verify_code.txt`
+- Depois da verificação, o programa apaga o `verify_code.txt` sozinho
 
-## 快手 CLI 子命令
+## Subcomandos do Kuaishou
 
 ```bash
 sau kuaishou login --account <account_name>
 sau kuaishou check --account <account_name>
-sau kuaishou upload-video --account <account_name> --file videos/demo.mp4 --title "示例标题" --desc "示例简介" --tags 运动,训练
-sau kuaishou upload-note --account <account_name> --images videos/1.png videos/2.png videos/3.png --title "图文标题" --note "图文示例" --tags 图文,测试
+sau kuaishou upload-video --account <account_name> --file videos/demo.mp4 --title "Título de exemplo" --desc "Descrição de exemplo" --tags esporte,treino
+sau kuaishou upload-note --account <account_name> --images videos/1.png videos/2.png videos/3.png --title "Título do post" --note "Post de exemplo" --tags post,teste
 ```
 
-## 小红书 CLI 子命令
+## Subcomandos do Xiaohongshu
 
 ```bash
 sau xiaohongshu login --account <account_name>
 sau xiaohongshu check --account <account_name>
-sau xiaohongshu upload-video --account <account_name> --file videos/demo.mp4 --title "示例标题" --desc "示例简介" --tags 小红书,视频
-sau xiaohongshu upload-note --account <account_name> --images videos/1.png videos/2.png videos/3.png --title "图文标题" --note "图文示例" --tags 图文,测试
+sau xiaohongshu upload-video --account <account_name> --file videos/demo.mp4 --title "Título de exemplo" --desc "Descrição de exemplo" --tags xiaohongshu,video
+sau xiaohongshu upload-note --account <account_name> --images videos/1.png videos/2.png videos/3.png --title "Título do post" --note "Post de exemplo" --tags post,teste
 ```
 
-海外环境如果无法登录默认创作者后台，可以通过环境变量切换到 RedNote 域名。该设置同时作用于登录、cookie 校验、视频发布和图文发布：
+Fora da China, se não der para entrar no painel de criador padrão, dá para trocar o domínio para o RedNote por variável de ambiente. Isso vale para o login, a validação do cookie e o envio de vídeos e de posts:
 
 ```bash
 SAU_XHS_CREATOR_BASE_URL=https://creator.rednote.com sau xiaohongshu login --account <account_name>
 ```
 
-## Bilibili CLI 子命令
+## Subcomandos do Bilibili
 
 ```bash
 sau bilibili login --account <account_name>
 sau bilibili check --account <account_name>
-sau bilibili upload-video --account <account_name> --file videos/demo.mp4 --title "示例标题" --desc "示例简介" --tid 249 --tags 足球,测试 --thumbnail covers/demo.png
+sau bilibili upload-video --account <account_name> --file videos/demo.mp4 --title "Título de exemplo" --desc "Descrição de exemplo" --tid 249 --tags futebol,teste --thumbnail covers/demo.png
 ```
 
-补充说明：
+Observações:
 
-- `creator` 之类的名字只是示例值，真正传的是用户自定义的 `account_name`
-- 一个 `account_name` 对应一个账号文件，可以准备多个账号并发使用
-- 浏览器平台统一元数据约定：
-- 视频使用 `title + desc + tags`
-- 图文使用 `title + note + tags`
-- `sau bilibili ...` 会自动准备 `biliup`
-- 如果本地没有 `biliup`，第一次运行会自动下载
-- 如果上游 GitHub Release 有更新，运行时会先自动更新
-- `sau bilibili login --account <name>` 建议由用户自己在本地真实终端里执行；如果终端里的二维码显示不完整，可直接打开当前目录下的 `qrcode.png` 扫码
+- Nomes como `creator` são só exemplos: o que você passa de verdade é o seu `account_name`
+- Cada `account_name` corresponde a um arquivo de conta; dá para preparar várias contas e usá-las em paralelo
+- Convenção de metadados nas plataformas que usam navegador:
+- vídeo usa `title + desc + tags`
+- post de imagens usa `title + note + tags`
+- `sau bilibili ...` prepara o `biliup` sozinho
+- Se o `biliup` não estiver instalado, a primeira execução baixa
+- Se houver versão nova no GitHub Release, a execução atualiza antes
+- `sau bilibili login --account <name>` é melhor o próprio usuário rodar num terminal de verdade; se o QR code sair cortado no terminal, abra o `qrcode.png` da pasta atual
 
-## 视频号 CLI 子命令
+## Subcomandos do Channels (视频号)
 
 ```bash
 sau tencent login --account <account_name>
 sau tencent check --account <account_name>
-sau tencent upload-video --account <account_name> --file videos/demo.mp4 --title "示例标题" --desc "示例简介" --tags 视频号,测试
+sau tencent upload-video --account <account_name> --file videos/demo.mp4 --title "Título de exemplo" --desc "Descrição de exemplo" --tags channels,teste
 ```
 
-视频号支持定时发布、草稿、合集和双比例封面：
+O Channels aceita publicação agendada, rascunho, coletânea e capa em duas proporções:
 
 ```bash
-sau tencent upload-video --account <account_name> --file videos/demo.mp4 --title "示例标题" --desc "示例简介" --schedule "2026-03-24 21:30" --thumbnail-landscape covers/landscape.png --thumbnail-portrait covers/portrait.png --collection "我的合集"
-sau tencent upload-video --account <account_name> --file videos/demo.mp4 --title "示例标题" --desc "示例简介" --draft
+sau tencent upload-video --account <account_name> --file videos/demo.mp4 --title "Título de exemplo" --desc "Descrição de exemplo" --schedule "2026-03-24 21:30" --thumbnail-landscape covers/landscape.png --thumbnail-portrait covers/portrait.png --collection "Minha coletânea"
+sau tencent upload-video --account <account_name> --file videos/demo.mp4 --title "Título de exemplo" --desc "Descrição de exemplo" --draft
 ```
 
-视频号登录和上传依赖浏览器中的登录态。无头模式下如果需要扫码，CLI 会生成临时二维码；需要人工查看页面时可以加 `--headed`。
+O login e o envio no Channels dependem da sessão do navegador. Sem janela, quando o QR code é necessário, a CLI gera uma imagem temporária; para acompanhar a página à vista, use `--headed`.
 
-## 百家号 CLI 子命令
+## Subcomandos do Baijiahao
 
 ```bash
 sau baijiahao login --account <account_name>
 sau baijiahao check --account <account_name>
-sau baijiahao upload-video --account <account_name> --file videos/demo.mp4 --title "示例标题" --desc "示例简介" --tags 百家号,测试
+sau baijiahao upload-video --account <account_name> --file videos/demo.mp4 --title "Título de exemplo" --desc "Descrição de exemplo" --tags baijiahao,teste
 ```
 
-百家号当前支持登录、账号检查和视频上传；支持 `--thumbnail` 与 `--collection`，暂不支持 `--schedule`。上传前需要先完成百度账号登录并保存账号文件。
+O Baijiahao aceita login, checagem de conta e envio de vídeo; aceita `--thumbnail` e `--collection`, mas ainda não aceita `--schedule`. Antes de enviar, é preciso entrar na conta Baidu e salvar o arquivo de conta.
 
-## 支付宝生活号 CLI 子命令
+## Subcomandos da conta de vida do Alipay
 
 ```bash
 sau alipay login --account <account_name>
 sau alipay check --account <account_name>
-sau alipay upload-video --account <account_name> --file videos/demo.mp4 --title "示例标题" --desc "示例简介" --tags 生活号,测试
+sau alipay upload-video --account <account_name> --file videos/demo.mp4 --title "Título de exemplo" --desc "Descrição de exemplo" --tags alipay,teste
 ```
 
-支付宝生活号当前支持登录、账号检查和视频上传；支持 `--thumbnail` 与 `--collection`，暂不支持图文上传和 `--schedule`。首次使用前需要在支付宝内容创作后台完成登录，并确认账号已开通生活号内容创作权限。
+A conta de vida do Alipay aceita login, checagem de conta e envio de vídeo; aceita `--thumbnail` e `--collection`, mas ainda não aceita post de imagens nem `--schedule`. Antes do primeiro uso, entre no painel de criação de conteúdo do Alipay e confirme que a conta tem permissão de criação na conta de vida.
 
-## YouTube CLI 子命令
+## Subcomandos do YouTube
 
 ```bash
 sau youtube login --account <account_name>
 sau youtube check --account <account_name>
-sau youtube upload-video --account <account_name> --file videos/demo.mp4 --title "示例标题" --desc "示例简介" --tags tag1,tag2 --playlist "我的系列" --visibility public
+sau youtube upload-video --account <account_name> --file videos/demo.mp4 --title "Título de exemplo" --desc "Descrição de exemplo" --tags tag1,tag2 --playlist "Minha playlist" --visibility public
 ```
 
-YouTube 登录需要在浏览器中完成 Google 账号登录，不使用二维码。`--visibility` 可选 `public`、`unlisted` 或 `private`，`--playlist` 可选。
+O login do YouTube é feito na conta Google pelo navegador, sem QR code. O `--visibility` aceita `public`, `unlisted` ou `private`, e o `--playlist` é opcional.
 
-## 微博 CLI 子命令
+## Subcomandos do Weibo
 
 ```bash
 sau weibo login --account <account_name>
 sau weibo check --account <account_name>
-sau weibo upload-video --account <account_name> --file videos/demo.mp4 --title "示例标题" --desc "示例简介" --tags 微博,测试 --thumbnail covers/demo.png
+sau weibo upload-video --account <account_name> --file videos/demo.mp4 --title "Título de exemplo" --desc "Descrição de exemplo" --tags weibo,teste --thumbnail covers/demo.png
 ```
 
-微博当前支持登录、账号检查和视频上传；标题最多 30 个字，封面图建议小于 5 MB，暂不支持图文上传和 `--schedule`。
+O Weibo aceita login, checagem de conta e envio de vídeo; o título tem no máximo 30 caracteres, a capa deve ficar abaixo de 5 MB e ainda não há post de imagens nem `--schedule`.
 
-## 虎扑 CLI 子命令
+## Subcomandos do Hupu (虎扑)
 
 ```bash
 sau hupu login --account <account_name>
 sau hupu check --account <account_name>
-sau hupu upload-video --account <account_name> --file videos/demo.mp4 --title "示例标题" --desc "示例简介" --tags 虎扑,测试 --thumbnail covers/demo.png
+sau hupu upload-video --account <account_name> --file videos/demo.mp4 --title "Título de exemplo" --desc "Descrição de exemplo" --tags hupu,teste --thumbnail covers/demo.png
 ```
 
-虎扑当前支持登录、账号检查和视频上传；标题长度要求为 4–40 个字，暂不支持图文上传和 `--schedule`。虎扑登录可能需要在浏览器中完成 QQ 或手机号登录，需要人工查看页面时可以加 `--headed`。
+O Hupu aceita login, checagem de conta e envio de vídeo; o título precisa ter de 4 a 40 caracteres e ainda não há post de imagens nem `--schedule`. O login pode exigir conta QQ ou número de celular no navegador; para acompanhar a página, use `--headed`.
 
-## 登录二维码说明
+## Sobre o QR code de login
 
-- 抖音、快手、小红书、视频号、百家号、支付宝生活号、微博和虎扑登录过程中，CLI / uploader 可能会生成临时二维码图片
-- 对普通用户来说，可以直接打开该图片扫码
-- 对可操作本地文件的 agent 来说，不要只把图片路径告诉用户
-- 这类二维码图片本身就是给用户扫码的，agent 应优先直接展示/发送本地图片给用户
-- Bilibili 和 YouTube 当前不走这套本地二维码图片托管链路，登录按上面的平台说明处理即可
+- No login de Douyin, Kuaishou, Xiaohongshu, Channels, Baijiahao, conta de vida do Alipay, Weibo e Hupu, a CLI ou o uploader pode gerar uma imagem temporária de QR code
+- Para uma pessoa, basta abrir a imagem e escanear
+- Para um agente com acesso aos arquivos locais, não basta mandar o caminho da imagem
+- Essa imagem existe para ser escaneada, então o agente deve mostrar ou enviar o arquivo direto para o usuário
+- Bilibili e YouTube não usam esse caminho de QR code local: siga as observações de cada plataforma acima
 
-## 定时发布
+## Publicação agendada
 
-抖音、快手、小红书、视频号的图文或视频上传，以及 Bilibili 的视频上传支持 `--schedule`。只要传了 `--schedule`，CLI 就会自动切换到对应平台的定时发布策略；不传则默认立即发布。百家号、支付宝生活号、微博和虎扑当前不支持 `--schedule`。
+Vídeos e posts de Douyin, Kuaishou, Xiaohongshu e Channels, além do vídeo do Bilibili, aceitam `--schedule`. Passando `--schedule`, a CLI muda para a estratégia de agendamento da plataforma; sem ele, publica na hora. Baijiahao, conta de vida do Alipay, Weibo e Hupu ainda não aceitam `--schedule`.
 
 ```bash
-sau douyin upload-video --account <account_name> --file videos/demo.mp4 --title "示例标题" --desc "示例简介" --schedule "2026-03-24 21:30"
-sau douyin upload-note --account <account_name> --images videos/1.png videos/2.png --title "图文标题" --note "图文示例" --schedule "2026-03-24 21:30"
-sau kuaishou upload-video --account <account_name> --file videos/demo.mp4 --title "示例标题" --desc "示例简介" --schedule "2026-03-24 21:30"
-sau kuaishou upload-note --account <account_name> --images videos/1.png videos/2.png videos/3.png --title "图文标题" --note "图文示例" --schedule "2026-03-24 21:30"
-sau xiaohongshu upload-video --account <account_name> --file videos/demo.mp4 --title "示例标题" --desc "示例简介" --schedule "2026-03-24 21:30"
-sau xiaohongshu upload-note --account <account_name> --images videos/1.png videos/2.png videos/3.png --title "图文标题" --note "图文示例" --schedule "2026-03-24 21:30"
-sau bilibili upload-video --account <account_name> --file videos/demo.mp4 --title "示例标题" --desc "示例简介" --tid 249 --schedule "2026-03-24 21:30"
-sau tencent upload-video --account <account_name> --file videos/demo.mp4 --title "示例标题" --desc "示例简介" --schedule "2026-03-24 21:30"
+sau douyin upload-video --account <account_name> --file videos/demo.mp4 --title "Título de exemplo" --desc "Descrição de exemplo" --schedule "2026-03-24 21:30"
+sau douyin upload-note --account <account_name> --images videos/1.png videos/2.png --title "Título do post" --note "Post de exemplo" --schedule "2026-03-24 21:30"
+sau kuaishou upload-video --account <account_name> --file videos/demo.mp4 --title "Título de exemplo" --desc "Descrição de exemplo" --schedule "2026-03-24 21:30"
+sau kuaishou upload-note --account <account_name> --images videos/1.png videos/2.png videos/3.png --title "Título do post" --note "Post de exemplo" --schedule "2026-03-24 21:30"
+sau xiaohongshu upload-video --account <account_name> --file videos/demo.mp4 --title "Título de exemplo" --desc "Descrição de exemplo" --schedule "2026-03-24 21:30"
+sau xiaohongshu upload-note --account <account_name> --images videos/1.png videos/2.png videos/3.png --title "Título do post" --note "Post de exemplo" --schedule "2026-03-24 21:30"
+sau bilibili upload-video --account <account_name> --file videos/demo.mp4 --title "Título de exemplo" --desc "Descrição de exemplo" --tid 249 --schedule "2026-03-24 21:30"
+sau tencent upload-video --account <account_name> --file videos/demo.mp4 --title "Título de exemplo" --desc "Descrição de exemplo" --schedule "2026-03-24 21:30"
 ```
 
-## 运行时参数
+## Parâmetros de execução
 
-CLI 将 `debug` 和 `headless` 拆成了两个独立维度：
+Na CLI, `debug` e `headless` são duas coisas independentes:
 
 ```bash
 --debug
@@ -217,67 +217,67 @@ CLI 将 `debug` 和 `headless` 拆成了两个独立维度：
 --headed
 ```
 
-- `--debug`: 打开调试行为，例如失败时保留更多调试信息
-- `--headless`: 无头模式运行
-- `--headed`: 有头模式运行
+- `--debug`: liga o modo de depuração, por exemplo guardando mais informação quando algo falha
+- `--headless`: roda sem janela
+- `--headed`: roda com janela
 
-如果都不传，CLI 当前默认按 `headless=True` 运行。
+Sem nenhum dos dois, a CLI roda com `headless=True`.
 
-补充：
+Complementando:
 
-- 抖音和快手的 CLI 默认都是无头模式
-- 如果用户明确要求可见浏览器窗口，或确实需要人工看页面，再显式传 `--headed`
+- A CLI de Douyin e Kuaishou roda sem janela por padrão
+- Só passe `--headed` quando o usuário pedir a janela do navegador ou quando for mesmo preciso olhar a página
 
-## 视频上传参数
+## Parâmetros do envio de vídeo
 
 ```bash
 --file videos/demo.mp4
---title "示例标题"
---desc "示例简介"
---tags 运动,训练
+--title "Título de exemplo"
+--desc "Descrição de exemplo"
+--tags esporte,treino
 --thumbnail videos/demo.png
 --thumbnail-landscape videos/cover-4x3.png
 --thumbnail-portrait videos/cover-3x4.png
 ```
 
-抖音和视频号支持同时设置两种比例的封面图：
+Douyin e Channels aceitam as duas proporções de capa ao mesmo tempo:
 
-- `--thumbnail-landscape`: 4:3 横版封面
-- `--thumbnail-portrait`: 3:4 竖版封面
-- `--thumbnail`: 兼容旧参数，等同于 3:4 竖版封面
+- `--thumbnail-landscape`: capa horizontal 4:3
+- `--thumbnail-portrait`: capa vertical 3:4
+- `--thumbnail`: parâmetro antigo, equivale à capa vertical 3:4
 
-视频号、百家号和支付宝生活号支持使用 `--collection` 指定已有合集；百家号和支付宝生活号还支持 `--thumbnail` 指定封面图。
+Channels, Baijiahao e conta de vida do Alipay aceitam `--collection` para apontar uma coletânea existente; Baijiahao e Alipay também aceitam `--thumbnail` para a capa.
 
-抖音额外支持：
+O Douyin ainda aceita:
 
 ```bash
 --product-link https://example.com/item
---product-title 示例商品
+--product-title Produto de exemplo
 ```
 
-Bilibili 额外要求：
+O Bilibili exige a mais:
 
 ```bash
 --tid 249
 ```
 
-- `--tid` 第一版是必填
-- `--tags` 会映射到 `biliup upload --tag`
-- `--schedule` 会映射到 Bilibili 所需的时间戳参数
+- `--tid` é obrigatório nesta primeira versão
+- `--tags` vira `biliup upload --tag`
+- `--schedule` vira o timestamp que o Bilibili espera
 
-## 图文上传参数
+## Parâmetros do post de imagens
 
 ```bash
 --images videos/1.png videos/2.png videos/3.png
---title "图文标题"
---note "图文内容"
---tags 图文,测试
+--title "Título do post"
+--note "Conteúdo do post"
+--tags post,teste
 ```
 
-图文上传当前限制：
+Limites atuais do post de imagens:
 
-- 抖音：最多 35 张图片，不支持 GIF
-- 快手：支持多张图片，建议传真实不同文件，不要把同一路径重复多次
-- 小红书：支持多张图片，正文 `--note` 可选，但 `--title` 建议始终显式传入
+- Douyin: no máximo 35 imagens, sem GIF
+- Kuaishou: aceita várias imagens; mande arquivos diferentes de verdade, não o mesmo caminho repetido
+- Xiaohongshu: aceita várias imagens, o `--note` é opcional, mas vale sempre passar o `--title`
 
-后续维护 CLI 时，优先看 `sau_cli.py`、`uploader/` 和 `skills/`。
+Para mexer na CLI daqui em diante, olhe `sau_cli.py`, `uploader/` e `skills/`.

@@ -975,7 +975,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_runtime_flags(weibo_upload_video_parser)
 
     # ── Hupu ──
-    hupu_parser = platform_parsers.add_parser("hupu", help="Hupu (虎扑) operations")
+    hupu_parser = platform_parsers.add_parser("hupu", help="operações do Hupu (虎扑)")
     hupu_actions = hupu_parser.add_subparsers(dest="action", required=True)
 
     for action_name in ("login", "check"):
@@ -1076,12 +1076,12 @@ async def dispatch(args: argparse.Namespace) -> int:
             return 0
 
         if args.action == "upload-note":
-            # 如果指定了 --notef，读取文件内容作为 note
+            # com --notef, o conteúdo do arquivo vira a nota
             note_content = args.note
             if args.notef:
                 note_file = Path(args.notef)
                 if not note_file.exists():
-                    print(f"错误：文件不存在: {note_file}", file=sys.stderr)
+                    print(f"erro: arquivo não encontrado: {note_file}", file=sys.stderr)
                     return 1
                 note_content = note_file.read_text(encoding="utf-8")
 
@@ -1174,7 +1174,7 @@ async def dispatch(args: argparse.Namespace) -> int:
         if args.action == "upload-video":
             parsed_tags = parse_tags(args.tags)
             if len(parsed_tags) > 10:
-                print(f"错误：小红书标签最多 10 个，当前提供了 {len(parsed_tags)} 个: {parsed_tags}", file=sys.stderr)
+                print(f"erro: o Xiaohongshu aceita no máximo 10 etiquetas; vieram {len(parsed_tags)}: {parsed_tags}", file=sys.stderr)
                 return 1
             request = XiaohongshuVideoUploadRequest(
                 account_name=args.account,
@@ -1195,7 +1195,7 @@ async def dispatch(args: argparse.Namespace) -> int:
         if args.action == "upload-note":
             parsed_tags = parse_tags(args.tags)
             if len(parsed_tags) > 10:
-                print(f"错误：小红书标签最多 10 个，当前提供了 {len(parsed_tags)} 个: {parsed_tags}", file=sys.stderr)
+                print(f"erro: o Xiaohongshu aceita no máximo 10 etiquetas; vieram {len(parsed_tags)}: {parsed_tags}", file=sys.stderr)
                 return 1
             request = XiaohongshuNoteUploadRequest(
                 account_name=args.account,

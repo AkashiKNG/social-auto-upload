@@ -1,148 +1,148 @@
 # Agent Bootstrap Prompt
 
-这份文档是写给 `OpenClaw`、`Codex`、`Claude Code / cc` 这类 agent 客户端用户的。
+Este documento é para quem usa clientes de agente como `OpenClaw`, `Codex` e `Claude Code / cc`.
 
-目标不是让 agent 先通读整个仓库，而是先把 `social-auto-upload` 安装到可运行、可验证、可继续执行任务的状态。
+A ideia não é o agente ler o repositório inteiro, e sim deixar o `social-auto-upload` instalado, funcionando e pronto para receber tarefas.
 
-当前主线已接入的平台：
+Plataformas já integradas:
 
 - `bilibili`
 - `douyin`
 - `kuaishou`
 - `xiaohongshu`
 
-## 这份文档解决什么问题
+## Que problema este documento resolve
 
-现在仓库里已经有：
+O repositório já tem:
 
-- 安装说明
-- CLI 文档
-- 平台 skill
+- instruções de instalação
+- documentação da CLI
+- skills por plataforma
 
-但这些内容更偏向“agent 进入仓库之后怎么执行”。
+Só que tudo isso fala do "o que o agente faz depois de entrar no repositório".
 
-这份文档补的是“用户第一次把仓库交给 agent 客户端时，应该怎么说”。
+Este documento cobre o outro lado: "o que o usuário deve dizer na primeira vez que entrega o repositório ao agente".
 
-## 推荐使用方式
+## Como usar
 
-1. 把整个仓库给你的 agent 客户端。
-2. 把下面这段启动提示词完整发给它。
-3. 等 agent 完成安装和 CLI 验证后，再继续给它下达登录、上传、定时发布等任务。
+1. Dê o repositório inteiro ao seu cliente de agente.
+2. Mande o texto de partida abaixo, inteiro.
+3. Quando o agente terminar a instalação e a conferência da CLI, passe as tarefas de login, envio e agendamento.
 
-## 通用启动提示词
+## Texto de partida
 
-复制下面整段，发给你的 agent：
+Copie o bloco inteiro e mande ao seu agente:
 
 ```text
-你现在在一个名为 `social-auto-upload` 的仓库中工作。
+Você está trabalhando num repositório chamado `social-auto-upload`.
 
-这是一个多平台社交媒体自动发布项目。当前主线已经接入：
+É um projeto de publicação automática em várias redes sociais. Já estão integrados:
 
 - bilibili
 - douyin
 - kuaishou
 - xiaohongshu
 
-你的第一目标不是通读全部源码，也不是优先运行历史 examples，而是先把项目安装到“可运行、可验证、可继续执行任务”的状态。
+Seu primeiro objetivo não é ler todo o código nem rodar os exemplos antigos, e sim deixar o projeto instalado, conferido e pronto para receber tarefas.
 
-请遵守以下规则：
+Siga estas regras:
 
-1. 默认把仓库根目录视为当前工作目录。
-2. 优先使用 `uv` 管理 Python 环境，不要默认回退到旧的 `requirements.txt`。
-3. 优先使用当前主线 CLI：`sau`。
-4. 优先参考这些文档：
+1. Considere a raiz do repositório como o diretório de trabalho.
+2. Use o `uv` para o ambiente Python; não caia de volta no antigo `requirements.txt`.
+3. Use a CLI atual: `sau`.
+4. Consulte primeiro estes documentos:
    - `docs/install.md`
    - `docs/CLI.md`
    - `docs/update.md`
-5. 如果需要平台级操作，优先参考这些 skill：
+5. Para operações por plataforma, consulte estas skills:
    - `skills/douyin-upload/`
    - `skills/kuaishou-upload/`
    - `skills/xiaohongshu-upload/`
    - `skills/bilibili-upload/`
-6. 不要默认走历史 `examples/` 和旧 Web 路径，除非当前 CLI 主线不可用。
-7. 如果登录流程生成二维码图片，不要只返回图片路径；请直接展示图片，或者明确告诉我该打开哪个本地图片文件扫码。
-8. 如果是 Bilibili 登录，不要在非交互环境里强行代跑；应改为指导我在本地真实终端执行。
-9. 安装完成后，请优先验证以下命令：
+6. Não use os `examples/` antigos nem o caminho da Web antiga, a menos que a CLI não esteja disponível.
+7. Se o login gerar uma imagem de QR code, não devolva só o caminho: mostre a imagem ou diga com clareza qual arquivo local devo abrir para escanear.
+8. No login do Bilibili, não tente rodar por mim em ambiente não interativo; me oriente a rodar no meu terminal.
+9. Depois de instalar, confira estes comandos:
    - `sau --help`
    - `sau douyin --help`
    - `sau kuaishou --help`
    - `sau xiaohongshu --help`
    - `sau bilibili --help`
-10. 完成后，请明确输出：
-   - 你实际执行了哪些命令
-   - 哪些验证通过了
-   - 当前项目是否已经进入“可继续登录/上传”的状态
-   - 推荐我下一步执行什么
+10. Ao terminar, diga claramente:
+   - quais comandos você rodou
+   - o que passou na conferência
+   - se o projeto já está pronto para login e envio
+   - o que você recomenda como próximo passo
 
-如果过程中遇到错误，不要跳过，请先说明错误，再给出你准备采取的下一步动作。
+Se aparecer algum erro, não pule: explique o erro e diga qual será seu próximo passo.
 ```
 
-## 安装完成后，你可以继续怎么说
+## O que dizer depois da instalação
 
-下面这些是你可以继续发给 agent 的任务示例。
+Exemplos de tarefas para mandar ao agente em seguida.
 
-### 做一次平台登录
-
-```text
-请继续帮我登录小红书账号，使用有头模式，账号名用 `creator`。
-```
+### Fazer um login
 
 ```text
-请继续帮我登录抖音账号，使用无头模式，账号名用 `creator`。
-```
-
-### 做一次 CLI 可用性检查
-
-```text
-请检查 bilibili、douyin、kuaishou、xiaohongshu 四个平台的 CLI 入口是否都可用，并告诉我缺什么依赖。
-```
-
-### 做一次真实上传
-
-```text
-请使用 xiaohongshu CLI，帮我上传一个图文草稿，使用定时发布，不要立即发布。
+Entre na minha conta do Xiaohongshu, com janela aberta, usando o nome de conta `creator`.
 ```
 
 ```text
-请使用 douyin CLI，帮我上传一个视频，优先走当前主线，不要走历史 example。
+Entre na minha conta do Douyin, sem janela, usando o nome de conta `creator`.
 ```
 
-## OpenClaw / Codex / Claude Code 使用建议
+### Conferir a CLI
+
+```text
+Confira se a CLI funciona nas quatro plataformas — bilibili, douyin, kuaishou e xiaohongshu — e me diga que dependências faltam.
+```
+
+### Fazer um envio de verdade
+
+```text
+Use a CLI do xiaohongshu para enviar um rascunho de post de imagens com publicação agendada, sem publicar na hora.
+```
+
+```text
+Use a CLI do douyin para enviar um vídeo pelo caminho atual, sem usar os exemplos antigos.
+```
+
+## Dicas por cliente
 
 ### OpenClaw
 
-- 适合直接粘贴上面的完整启动提示词
-- 如果支持把仓库作为工作目录挂载进去，优先先挂载仓库，再发提示词
-- 如果支持本地文件展示，登录二维码应让 agent 直接展示图片
+- Dá para colar o texto de partida inteiro
+- Se der para montar o repositório como diretório de trabalho, monte antes de mandar o texto
+- Se o cliente exibe arquivos locais, deixe o agente mostrar a imagem do QR code
 
 ### Codex
 
-- 建议先让它完成 bootstrap，再继续发平台任务
-- 让它优先使用 `docs/install.md`、`docs/CLI.md` 和 `skills/`
-- 不要让它一开始自由探索整个仓库，否则容易走到历史路径
+- Peça primeiro o bootstrap e só depois as tarefas por plataforma
+- Faça-o usar `docs/install.md`, `docs/CLI.md` e `skills/`
+- Não o deixe explorar o repositório livremente no começo, ou ele acaba nos caminhos antigos
 
 ### Claude Code / cc
 
-- 建议先让仓库成为当前 workspace
-- 再发完整启动提示词
-- 后续按“安装 -> 验证 -> 登录 -> 上传”顺序继续给任务
+- Deixe o repositório como workspace atual
+- Mande o texto de partida completo
+- Depois siga a ordem: instalar → conferir → entrar na conta → enviar
 
-## 为什么不按平台拆四套提示词
+## Por que não quatro textos, um por plataforma
 
-因为这个项目现在已经有统一的 CLI 主线。
+Porque hoje o projeto tem uma CLI única.
 
-用户第一次把仓库交给 agent 时，更需要的是：
+Na primeira vez que alguém entrega o repositório a um agente, o que importa é que ele:
 
-- agent 知道主入口是什么
-- agent 知道应该优先走哪条路径
-- agent 知道哪些是历史路径
-- agent 安装完成后先给出明确验收结果
+- saiba qual é a entrada principal
+- saiba qual caminho seguir
+- saiba o que é caminho antigo
+- entregue um resultado claro depois de instalar
 
-等进入执行阶段，再让 agent 根据你的实际目标去选择：
+Na hora de executar, aí sim o agente escolhe conforme o seu objetivo:
 
 - `bilibili`
 - `douyin`
 - `kuaishou`
 - `xiaohongshu`
 
-这样比给用户准备四套平台 prompt 更稳，也更容易维护。
+Isso é mais estável e mais fácil de manter do que quatro prompts diferentes.

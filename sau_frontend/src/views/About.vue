@@ -2,43 +2,43 @@
   <div class="about">
     <el-card class="about-card">
       <div class="about-header">
-        <h1>自媒体自动化运营系统</h1>
+        <h1>Automação de redes sociais</h1>
         <p class="version">social-auto-upload</p>
       </div>
 
       <el-divider />
 
       <div class="about-section">
-        <h3>系统简介</h3>
+        <h3>O que é</h3>
         <p>
-          本系统是一款强大的自动化工具，帮助内容创作者和运营人员一键将视频内容高效发布到多个国内外主流社交媒体平台。
-          支持视频上传、定时发布等功能。
+          Uma ferramenta de automação que publica seus vídeos em várias redes sociais de uma vez, para quem cria conteúdo e cuida de perfis.
+          Envia vídeos, agenda publicações e mais.
         </p>
       </div>
 
       <div class="about-section">
-        <h3>支持平台</h3>
+        <h3>Plataformas</h3>
         <div class="platform-tags">
-          <el-tag type="danger">抖音</el-tag>
-          <el-tag type="success">快手</el-tag>
-          <el-tag type="warning">视频号</el-tag>
-          <el-tag type="info">小红书</el-tag>
+          <el-tag type="danger">Douyin</el-tag>
+          <el-tag type="success">Kuaishou</el-tag>
+          <el-tag type="warning">Canal do WeChat</el-tag>
+          <el-tag type="info">Xiaohongshu</el-tag>
         </div>
       </div>
 
       <div class="about-section">
-        <h3>核心功能</h3>
+        <h3>Principais recursos</h3>
         <ul class="feature-list">
-          <li>多平台账号管理与登录状态维护</li>
-          <li>视频素材上传与管理</li>
-          <li>一键多平台发布</li>
-          <li>定时发布与批量发布</li>
-          <li>Cookie 导入导出</li>
+          <li>Contas de várias plataformas, com a sessão sempre válida</li>
+          <li>Envio e organização dos vídeos</li>
+          <li>Publicação em várias plataformas de uma vez</li>
+          <li>Publicação agendada e em lote</li>
+          <li>Cookie Importação e exportação</li>
         </ul>
       </div>
 
       <div class="about-section">
-        <h3>技术栈</h3>
+        <h3>Tecnologias</h3>
         <div class="tech-tags">
           <el-tag effect="plain">Vue 3</el-tag>
           <el-tag effect="plain">Element Plus</el-tag>
@@ -53,7 +53,7 @@
 </template>
 
 <script setup>
-// 关于页面组件
+// componente da página Sobre
 </script>
 
 <style lang="scss" scoped>

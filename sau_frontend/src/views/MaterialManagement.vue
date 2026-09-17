@@ -1,24 +1,24 @@
 <template>
   <div class="material-management">
     <div class="page-header">
-      <h1>素材管理</h1>
+      <h1>Materiais</h1>
     </div>
     
     <div class="material-list-container">
       <div class="material-search">
         <el-input
           v-model="searchKeyword"
-          placeholder="输入文件名搜索"
+          placeholder="Buscar por nome do arquivo"
           prefix-icon="Search"
           clearable
           @clear="handleSearch"
           @input="handleSearch"
         />
         <div class="action-buttons">
-          <el-button type="primary" @click="handleUploadMaterial">上传素材</el-button>
+          <el-button type="primary" @click="handleUploadMaterial">envia um material</el-button>
           <el-button type="info" @click="fetchMaterials" :loading="false">
             <el-icon :class="{ 'is-loading': isRefreshing }"><Refresh /></el-icon>
-            <span v-if="isRefreshing">刷新中</span>
+            <span v-if="isRefreshing">Atualizando</span>
           </el-button>
         </div>
       </div>
@@ -26,45 +26,45 @@
       <div v-if="filteredMaterials.length > 0" class="material-list">
         <el-table :data="filteredMaterials" style="width: 100%">
           <el-table-column prop="uuid" label="UUID" width="180" />
-          <el-table-column prop="filename" label="文件名" width="300" />
-          <el-table-column prop="filesize" label="文件大小" width="120">
+          <el-table-column prop="filename" label="Arquivo" width="300" />
+          <el-table-column prop="filesize" label="Tamanho" width="120">
             <template #default="scope">
               {{ scope.row.filesize }} MB
             </template>
           </el-table-column>
-          <el-table-column prop="upload_time" label="上传时间" width="180" />
-          <el-table-column label="操作">
+          <el-table-column prop="upload_time" label="Enviado em" width="180" />
+          <el-table-column label="Ações">
             <template #default="scope">
-              <el-button size="small" @click="handlePreview(scope.row)">预览</el-button>
-              <el-button size="small" type="danger" @click="handleDelete(scope.row)">删除</el-button>
+              <el-button size="small" @click="handlePreview(scope.row)">Ver</el-button>
+              <el-button size="small" type="danger" @click="handleDelete(scope.row)">Excluir</el-button>
             </template>
           </el-table-column>
         </el-table>
       </div>
       
       <div v-else class="empty-data">
-        <el-empty description="暂无素材数据" />
+        <el-empty description="Nenhum material ainda" />
       </div>
     </div>
     
-    <!-- 上传对话框 -->
+    <!-- janela de envio -->
     <el-dialog
       v-model="uploadDialogVisible"
-      title="上传素材"
+      title="envia um material"
       width="40%"
       @close="handleUploadDialogClose"
     >
       <div class="upload-form">
         <el-form label-width="80px">
-          <el-form-item label="文件名称:">
+          <el-form-item label="Nome:">
             <el-input
               v-model="customFilename"
-              placeholder="选填 (仅单个文件时生效)"
+              placeholder="opcional (só vale quando é um arquivo só)"
               :disabled="customFilenameDisabled"
               clearable
             />
           </el-form-item>
-          <el-form-item label="选择文件">
+          <el-form-item label="Escolher arquivos">
             <el-upload
               class="upload-demo"
               drag
@@ -76,16 +76,16 @@
             >
               <el-icon class="el-icon--upload"><Upload /></el-icon>
               <div class="el-upload__text">
-                将文件拖到此处，或<em>点击上传</em>
+                Arraste os arquivos até aqui, ou<em>clique para enviar</em>
               </div>
               <template #tip>
                 <div class="el-upload__tip">
-                  支持视频、图片等格式文件，可一次选择多个文件
+                  Aceita vídeos, imagens e outros formatos; dá para escolher vários de uma vez
                 </div>
               </template>
             </el-upload>
           </el-form-item>
-          <el-form-item label="上传列表" v-if="fileList.length > 0">
+          <el-form-item label="Arquivos escolhidos" v-if="fileList.length > 0">
             <div class="upload-file-list">
               <div v-for="file in fileList" :key="file.uid" class="upload-file-item">
                 <span class="file-name">{{ file.name }}</span>
@@ -104,18 +104,18 @@
       </div>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="uploadDialogVisible = false">取消</el-button>
+          <el-button @click="uploadDialogVisible = false">Cancelar</el-button>
           <el-button type="primary" @click="submitUpload" :loading="isUploading">
-            {{ isUploading ? '上传中' : '确认上传' }}
+            {{ isUploading ? 'Enviando' : 'Enviar' }}
           </el-button>
         </div>
       </template>
     </el-dialog>
     
-    <!-- 预览对话框 -->
+    <!-- janela de pré-visualização -->
     <el-dialog
       v-model="previewDialogVisible"
-      title="素材预览"
+      title="Pré-visualização"
       width="50%"
       :top="'10vh'"
     >
@@ -123,17 +123,17 @@
         <div v-if="isVideoFile(currentMaterial.filename)" class="video-preview">
           <video controls style="max-width: 100%; max-height: 60vh;">
             <source :src="getPreviewUrl(currentMaterial.file_path)" type="video/mp4">
-            您的浏览器不支持视频播放
+            Seu navegador não reproduz vídeo
           </video>
         </div>
         <div v-else-if="isImageFile(currentMaterial.filename)" class="image-preview">
           <img :src="getPreviewUrl(currentMaterial.file_path)" style="max-width: 100%; max-height: 60vh;" />
         </div>
         <div v-else class="file-info">
-          <p>文件名: {{ currentMaterial.filename }}</p>
-          <p>文件大小: {{ currentMaterial.filesize }} MB</p>
-          <p>上传时间: {{ currentMaterial.upload_time }}</p>
-          <el-button type="primary" @click="downloadFile(currentMaterial)">下载文件</el-button>
+          <p>Arquivo: {{ currentMaterial.filename }}</p>
+          <p>Tamanho: {{ currentMaterial.filesize }} MB</p>
+          <p>Enviado em: {{ currentMaterial.upload_time }}</p>
+          <el-button type="primary" @click="downloadFile(currentMaterial)">Baixar arquivo</el-button>
         </div>
       </div>
     </el-dialog>
@@ -147,20 +147,20 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { materialApi } from '@/api/material'
 import { useAppStore } from '@/stores/app'
 
-// 获取应用状态管理
+// estado global da aplicação
 const appStore = useAppStore()
 
-// 搜索和状态控制
+// busca e estado da tela
 const searchKeyword = ref('')
 const isRefreshing = ref(false)
 const isUploading = ref(false)
 
-// 对话框控制
+// controle das janelas
 const uploadDialogVisible = ref(false)
 const previewDialogVisible = ref(false)
 const currentMaterial = ref(null)
 
-// 文件上传
+// envio de arquivos
 const fileList = ref([])
 const customFilename = ref('')
 const customFilenameDisabled = computed(() => fileList.value.length > 1)
@@ -175,7 +175,7 @@ watch(fileList, (newList) => {
 });
 
 
-// 获取素材列表
+// busca a lista de materiais
 const fetchMaterials = async () => {
   isRefreshing.value = true
   try {
@@ -183,19 +183,19 @@ const fetchMaterials = async () => {
     
     if (response.code === 200) {
       appStore.setMaterials(response.data)
-      ElMessage.success('刷新成功')
+      ElMessage.success('Lista atualizada')
     } else {
-      ElMessage.error('获取素材列表失败')
+      ElMessage.error('Não consegui carregar os materiais')
     }
   } catch (error) {
-    console.error('获取素材列表出错:', error)
-    ElMessage.error('获取素材列表失败')
+    console.error('Erro ao carregar os materiais:', error)
+    ElMessage.error('Não consegui carregar os materiais')
   } finally {
     isRefreshing.value = false
   }
 }
 
-// 过滤素材
+// filtra os materiais
 const filteredMaterials = computed(() => {
   if (!searchKeyword.value) return appStore.materials
   
@@ -205,28 +205,28 @@ const filteredMaterials = computed(() => {
   )
 })
 
-// 搜索处理
+// trata a busca
 const handleSearch = () => {
-  // 搜索逻辑已通过计算属性实现
+  // a busca já é feita por propriedade computada
 }
 
-// 上传素材
+// envia um material
 const handleUploadMaterial = () => {
-  // 清空变量
+  // limpa os campos
   fileList.value = []
   customFilename.value = ''
   uploadProgress.value = {};
   uploadDialogVisible.value = true
 }
 
-// 关闭上传对话框时清空变量
+// limpa os campos ao fechar a janela de envio
 const handleUploadDialogClose = () => {
   fileList.value = []
   customFilename.value = ''
   uploadProgress.value = {};
 }
 
-// 文件选择变更
+// mudou a seleção de arquivos
 const handleFileChange = (file, uploadFileList) => {
   fileList.value = uploadFileList;
   const newProgress = {};
@@ -243,10 +243,10 @@ const handleFileRemove = (file, uploadFileList) => {
   uploadProgress.value = newProgress;
 }
 
-// 提交上传
+// envia os arquivos
 const submitUpload = async () => {
   if (fileList.value.length === 0) {
-    ElMessage.warning('请选择要上传的文件')
+    ElMessage.warning('Escolha os arquivos para enviar')
     return
   }
   
@@ -254,16 +254,16 @@ const submitUpload = async () => {
   
   for (const file of fileList.value) {
     try {
-      // 确保文件对象存在
+      // garante que o arquivo existe
       if (!file || !file.raw) {
-        ElMessage.warning(`文件 ${file.name} 对象无效，已跳过`)
+        ElMessage.warning(`Arquivo ${file.name} inválido, pulado`)
         continue
       }
       
       const formData = new FormData()
       formData.append('file', file.raw)
       
-      // 只有当只有一个文件时，自定义文件名才生效
+      // o nome personalizado só vale quando há um único arquivo
       if (fileList.value.length === 1 && customFilename.value.trim()) {
         formData.append('filename', customFilename.value.trim())
       }
@@ -295,15 +295,15 @@ const submitUpload = async () => {
       })
       
       if (response.code === 200) {
-        ElMessage.success(`文件 ${file.name} 上传成功`)
+        ElMessage.success(`Arquivo ${file.name} enviado`)
         const progressData = uploadProgress.value[file.uid];
-        if(progressData) progressData.speed = '完成';
+        if(progressData) progressData.speed = 'concluído';
       } else {
-        ElMessage.error(`文件 ${file.name} 上传失败: ${response.msg || '未知错误'}`)
+        ElMessage.error(`Falha ao enviar ${file.name}: ${response.msg || 'erro desconhecido'}`)
       }
     } catch (error) {
-      console.error(`上传文件 ${file.name} 出错:`, error)
-      ElMessage.error(`文件 ${file.name} 上传失败: ${error.message || '未知错误'}`)
+      console.error(`envio do arquivo ${file.name} deu erro:`, error)
+      ElMessage.error(`Falha ao enviar ${file.name}: ${error.message || 'erro desconhecido'}`)
     }
   }
   
@@ -313,30 +313,30 @@ const submitUpload = async () => {
   await fetchMaterials()
 }
 
-// 预览素材
+// pré-visualiza o material
 const handlePreview = async (material) => {
   currentMaterial.value = null
   previewDialogVisible.value = true
-  ElMessage.info('加载中...')
+  ElMessage.info('Carregando...')
   try {
-    // 等待一小段时间以确保对话框已打开
+    // espera um instante para a janela terminar de abrir
     await new Promise(resolve => setTimeout(resolve, 100))
     currentMaterial.value = material
   } catch (error) {
-    console.error('预览素材出错:', error)
-    ElMessage.error('预览加载失败')
+    console.error('Erro ao pré-visualizar o material:', error)
+    ElMessage.error('Não consegui carregar a pré-visualização')
     previewDialogVisible.value = false
   }
 }
 
-// 删除素材
+// remove um material
 const handleDelete = (material) => {
   ElMessageBox.confirm(
-    `确定要删除素材 ${material.filename} 吗？`,
-    '警告',
+    `Remover o material ${material.filename}?`,
+    'Atenção',
     {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar',
       type: 'warning',
     }
   )
@@ -346,33 +346,33 @@ const handleDelete = (material) => {
         
         if (response.code === 200) {
           appStore.removeMaterial(material.id)
-          ElMessage.success('删除成功')
+          ElMessage.success('Removido')
         } else {
-          ElMessage.error(response.msg || '删除失败')
+          ElMessage.error(response.msg || 'Não consegui remover')
         }
       } catch (error) {
-        console.error('删除素材出错:', error)
-        ElMessage.error('删除失败')
+        console.error('remove um materialdeu erro:', error)
+        ElMessage.error('Não consegui remover')
       }
     })
     .catch(() => {
-      // 取消删除
+      // remoção cancelada
     })
 }
 
-// 获取预览URL
+// monta a URL de pré-visualização
 const getPreviewUrl = (filePath) => {
   const filename = filePath.split('/').pop()
   return materialApi.getMaterialPreviewUrl(filename)
 }
 
-// 下载文件
+// Baixar arquivo
 const downloadFile = (material) => {
   const url = materialApi.downloadMaterial(material.file_path)
   window.open(url, '_blank')
 }
 
-// 判断文件类型
+// descobre o tipo do arquivo
 const isVideoFile = (filename) => {
   const videoExtensions = ['.mp4', '.avi', '.mov', '.wmv', '.flv', '.mkv']
   return videoExtensions.some(ext => filename.toLowerCase().endsWith(ext))
@@ -383,9 +383,9 @@ const isImageFile = (filename) => {
   return imageExtensions.some(ext => filename.toLowerCase().endsWith(ext))
 }
 
-// 组件挂载时获取素材列表
+// busca a lista de materiais quando o componente monta
 onMounted(() => {
-  // 只有store中没有数据时才获取
+  // só busca quando a store está vazia
   if (appStore.materials.length === 0) {
     fetchMaterials()
   }
@@ -508,7 +508,7 @@ onMounted(() => {
   display: block;
 }
 
-/* 覆盖Element Plus对话框样式 */
+/* sobrescreve o estilo das janelas do Element Plus */
 :deep(.el-dialog__body) {
   padding: 20px 0;
 }
@@ -524,9 +524,9 @@ onMounted(() => {
   padding-bottom: 15px;
 }
 
-/* 修改上传进度条样式 */
+/* estilo da barra de progresso do envio */
 :deep(.el-progress__text) {
-  color: #303133 !important; /* 深灰色字体，确保在各种背景上都可见 */
+  color: #303133 !important; /* cinza escuro, legível em qualquer fundo */
   font-size: 12px;
 }
 
@@ -536,21 +536,21 @@ onMounted(() => {
 
 .upload-file-item {
   border: 1px solid #dcdfe6;
-  border-radius: 6px; /* 增加圆角 */
-  padding: 12px; /* 增加内边距 */
-  margin-bottom: 12px; /* 增加外边距 */
-  background-color: #fafafa; /* 轻微背景色 */
-  transition: box-shadow 0.3s; /* 添加过渡效果 */
+  border-radius: 6px; /* cantos mais arredondados */
+  padding: 12px; /* mais espaçamento interno */
+  margin-bottom: 12px; /* mais espaçamento externo */
+  background-color: #fafafa; /* fundo bem leve */
+  transition: box-shadow 0.3s; /* com transição */
 }
 
 .upload-file-item:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* 悬停效果 */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* efeito ao passar o mouse */
 }
 
 .upload-file-item .file-name {
   font-size: 14px;
-  color: #303133; /* 深灰色字体 */
-  margin-bottom: 8px; /* 增加底部间距 */
+  color: #303133; /* fonte cinza escuro */
+  margin-bottom: 8px; /* mais espaço embaixo */
   display: block;
   font-weight: 500;
 }

@@ -29,7 +29,7 @@ def main() -> None:
         "--tid",
         str(VideoZoneTypes.SPORTS_FOOTBALL.value),
         "--tags",
-        "足球,测试",
+        "futebol,teste",
         "--schedule",
         "2026-03-26 16:00",
     ]

@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-"""百家号（百度百家号）视频上传 + 扫码登录。
+"""Baijiahao (Baijiahao do Baidu)envio de vídeo + login por QR code.
 
-功能：
-  - baijiahao_cookie_gen: headless 扫码登录（百度 passport 二维码）
-  - cookie_auth: 验证 cookie 是否有效
-  - baijiahao_setup: 统一入口（检查/触发登录）
-  - BaiJiaHaoVideo: 视频上传类
+o que faz: 
+  - baijiahao_cookie_gen: headless login por QR code (QR code do passport do Baidu)
+  - cookie_auth: confere se o cookie ainda vale
+  - baijiahao_setup: entrada única (verifica a sessão e, se preciso, faz login)
+  - BaiJiaHaoVideo: classe de envio de vídeo
 """
 from __future__ import annotations
 
@@ -27,10 +27,10 @@ from utils.login_qrcode import build_login_qrcode_path, decode_qrcode_from_path,
 BAIJIAHAO_LOGIN_URL = "https://baijiahao.baidu.com/builder/theme/bjh/login"
 BAIJIAHAO_HOME_URL = "https://baijiahao.baidu.com/builder/rc/home"
 BAIJIAHAO_PUBLISH_URL = "https://baijiahao.baidu.com/builder/rc/edit?type=videoV2"
-# 发布成功后跳转到的 URL 前缀
+# começo da URL para onde vai depois de publicar
 BAIJIAHAO_SUCCESS_URL_PREFIX = "https://baijiahao.baidu.com/builder/rc/clue"
 
-# 百度 passport 二维码图片选择器
+# seletor da imagem do QR code do passport do Baidu
 QR_SELECTOR = 'img[src^="https://passport.baidu.com/v2/api/qrcode"]'
 
 
@@ -74,10 +74,10 @@ def _resolve_account_file(account_file: str | Path) -> str:
 
 
 async def _grab_qr(page: Page, account_file: str) -> dict:
-    """截取百度 passport 扫码登录二维码。
+    """recorta o QR code da tela de login do passport do Baidu.
 
-    百家号登录页点「登录」后弹出百度统一登录框，其中二维码是 img[src] 指向
-    passport.baidu.com 的图片 URL，可以直接下载或截图。
+    na tela de login do Baijiahao, clica "login" abre a janela de login do Baidu, onde o QR code é um img[src] aponta para
+    passport.baidu.com a URL da imagem, que dá para baixar ou capturar.
     """
     qr = page.locator(QR_SELECTOR).first
     await qr.wait_for(state="attached", timeout=60000)
@@ -85,7 +85,7 @@ async def _grab_qr(page: Page, account_file: str) -> dict:
     qrcode_path = build_login_qrcode_path(account_file)
     qrcode_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # 优先直接下载高清图片 URL
+    # tenta primeiro baixar a URL da imagem em alta
     src = await qr.get_attribute("src")
     if src and src.startswith("https://"):
         try:
@@ -97,36 +97,36 @@ async def _grab_qr(page: Page, account_file: str) -> dict:
         await qr.screenshot(path=str(qrcode_path))
 
     qrcode_content = decode_qrcode_from_path(qrcode_path)
-    baijiahao_logger.info(_msg("🖼️", f"二维码已保存到: {qrcode_path}"))
+    baijiahao_logger.info(_msg("🖼️", f"QR code salvo em: {qrcode_path}"))
     if qrcode_content:
-        print_terminal_qrcode(qrcode_content, qrcode_path, "百度APP/手机百度")
+        print_terminal_qrcode(qrcode_content, qrcode_path, "aplicativo do Baidu")
     else:
-        baijiahao_logger.warning(_msg("😵", f"终端没法完整显示二维码，请打开 {qrcode_path} 扫码"))
+        baijiahao_logger.warning(_msg("😵", f"o terminal não mostra o QR code inteiro; abra {qrcode_path} escanear o QR code"))
     return {"image_path": str(qrcode_path), "image_data_url": ""}
 
 
 async def _is_login_completed(page: Page) -> bool:
-    """判断百度登录是否完成：URL 离开 login 页 或 出现 BDUSS cookie。"""
+    """vê se o login do Baidu terminouído: URL sair da tela de login ou aparecer o cookie BDUSS."""
     if "login" in page.url.lower():
-        # 还在登录页，检查 cookies
+        # ainda na tela de login; conferindo os cookies
         cookies = await page.context.cookies()
         if any(c.get("name") in ("BDUSS", "STOKEN") for c in cookies):
             return True
         return False
-    # 跳走了说明登录成功
+    # sair dessa página significa que o login deu certo
     return True
 
 
 async def baijiahao_cookie_gen(account_file, qrcode_callback=None, poll_interval: int = 3, max_checks: int = 120, headless: bool = LOCAL_CHROME_HEADLESS):
-    """无头/有头扫码登录百家号，保存 cookie。
+    """login por QR code no Baijiahao, com ou sem janela, salvando o cookie.
 
-    流程：打开登录页 → 点「登录」按钮弹出百度 passport 登录框 → 截取二维码 → 等待扫码完成 → 保存 storage_state。
-    返回标准 login result dict。
+    fluxo: abre a tela de login → clica em "login" → abre a janela do passport do Baidu → recorta o QR code → espera a leitura → salva o storage_state.
+    devolve o dicionário padrão do resultado de login.
     """
     account_file = _resolve_account_file(account_file)
     Path(account_file).parent.mkdir(parents=True, exist_ok=True)
     qrcode_path = None
-    result = _build_login_result(False, "failed", "百家号登录失败", account_file)
+    result = _build_login_result(False, "failed", "falha no login do Baijiahao", account_file)
 
     async with async_playwright() as playwright:
         browser = await playwright.chromium.launch(**_build_launch_kwargs(headless=headless))
@@ -136,55 +136,55 @@ async def baijiahao_cookie_gen(account_file, qrcode_callback=None, poll_interval
             await page.goto(BAIJIAHAO_LOGIN_URL, timeout=60000, wait_until="domcontentloaded")
             await page.wait_for_timeout(4000)
 
-            # 点击「登录」按钮触发百度 passport 弹窗
+            # clica "login" botãodispara a janela do passport do Baidu
             login_btn = page.get_by_text("登录", exact=True).first
             try:
                 await login_btn.click(timeout=10000)
             except Exception:
-                # 有些情况直接就在登录状态
+                # em alguns casos a sessão já está ativa
                 pass
             await page.wait_for_timeout(4000)
 
             if headless:
-                baijiahao_logger.info(_msg("🧍", "无头登录中：二维码已存为图片，请用百度APP扫码"))
+                baijiahao_logger.info(_msg("🧍", "login sem janela: o QR code virou imagem; escaneie pelo aplicativo do Baidu"))
             else:
-                baijiahao_logger.info(_msg("🧍", "请在打开的浏览器中扫码登录百家号"))
+                baijiahao_logger.info(_msg("🧍", "entre no Baijiahao pelo QR code na janela aberta"))
 
-            # 截取二维码
+            # recorta o QR code
             qrcode_info = await _grab_qr(page, account_file)
             qrcode_path = Path(qrcode_info["image_path"]) if qrcode_info.get("image_path") else None
             await _emit_qrcode_callback(qrcode_callback, qrcode_info)
 
-            baijiahao_logger.info(_msg("🧍", "请扫码，正在耐心等待登录完成"))
+            baijiahao_logger.info(_msg("🧍", "escaneie o QR code; esperando o login terminar"))
 
-            # 轮询等待登录完成
+            # fica verificando até o login terminar
             for _ in range(max_checks):
                 if await _is_login_completed(page):
-                    baijiahao_logger.info(_msg("🥳", f"扫码成功，当前页面: {page.url}"))
-                    result = _build_login_result(True, "success", "百家号扫码登录成功", account_file, qrcode_info, page.url)
+                    baijiahao_logger.info(_msg("🥳", f"escanear o QR codedeu certo; página atual: {page.url}"))
+                    result = _build_login_result(True, "success", "login por QR code do Baijiahao concluído", account_file, qrcode_info, page.url)
                     break
                 await page.wait_for_timeout(poll_interval * 1000)
             else:
-                result = _build_login_result(False, "timeout", "等待百家号扫码登录超时", account_file, qrcode_info, page.url)
+                result = _build_login_result(False, "timeout", "tempo esgotado esperando o login por QR code do Baijiahao", account_file, qrcode_info, page.url)
 
             if result["success"]:
                 await asyncio.sleep(2)
                 await context.storage_state(path=account_file)
-                baijiahao_logger.success(_msg("🥳", f"cookie 已保存: {account_file}"))
+                baijiahao_logger.success(_msg("🥳", f"cookie salvo: {account_file}"))
         except Exception as exc:
             result = _build_login_result(False, "failed", str(exc), account_file, current_url=page.url if "page" in locals() else "")
         finally:
             if remove_qrcode_file(qrcode_path):
-                baijiahao_logger.info(_msg("🧹", f"临时二维码文件已清理: {qrcode_path}"))
+                baijiahao_logger.info(_msg("🧹", f"arquivo temporário do QR code apagado: {qrcode_path}"))
             if not result["success"]:
-                baijiahao_logger.error(_msg("😢", f"登录失败: {result['message']}"))
+                baijiahao_logger.error(_msg("😢", f"falha no login: {result['message']}"))
             await context.close()
             await browser.close()
     return result
 
 
 async def cookie_auth(account_file):
-    """验证百家号 cookie 是否有效。访问后台首页，检测是否出现登录提示。"""
+    """verificaçãoo cookie do Baijiahao ainda é válido.abre a página inicial do painel e vê se pede login."""
     account_file = _resolve_account_file(account_file)
     async with async_playwright() as playwright:
         browser = await playwright.chromium.launch(**_build_launch_kwargs(headless=True))
@@ -195,37 +195,37 @@ async def cookie_auth(account_file):
             await page.wait_for_timeout(5000)
 
             if await page.get_by_text("注册/登录百家号").count():
-                baijiahao_logger.info(_msg("🥹", "cookie 已失效"))
+                baijiahao_logger.info(_msg("🥹", "cookie expirado"))
                 return False
             else:
-                baijiahao_logger.success(_msg("🥳", "cookie 有效"))
+                baijiahao_logger.success(_msg("🥳", "cookie válido"))
                 return True
         except Exception as exc:
-            baijiahao_logger.warning(_msg("😵", f"cookie 校验出错，按失效处理: {exc}"))
+            baijiahao_logger.warning(_msg("😵", f"cookie erro na verificação: tratando como expirado: {exc}"))
             return False
         finally:
             await browser.close()
 
 
 async def baijiahao_setup(account_file, handle=False, return_detail=False, qrcode_callback=None, headless: bool = LOCAL_CHROME_HEADLESS):
-    """统一入口：检查 cookie → 如无效且 handle=True 则触发扫码登录。"""
+    """entrada única: confere o cookie → se estiver inválido e handle=True dispara o login por QR code."""
     account_file = _resolve_account_file(account_file)
     if not os.path.exists(account_file) or not await cookie_auth(account_file):
         if not handle:
-            result = _build_login_result(False, "cookie_invalid", "cookie 文件不存在或已失效", account_file)
+            result = _build_login_result(False, "cookie_invalid", "cookie arquivo inexistente ou expirado", account_file)
             return result if return_detail else False
-        baijiahao_logger.info(_msg("🥹", "cookie 文件不存在或已失效，自动打开浏览器请扫码登录"))
+        baijiahao_logger.info(_msg("🥹", "cookie arquivo inexistente ou expirado: abrindo o navegador para você escanear o QR code"))
         result = await baijiahao_cookie_gen(account_file, qrcode_callback=qrcode_callback, headless=headless)
         return result if return_detail else result["success"]
 
-    result = _build_login_result(True, "cookie_valid", "cookie 有效", account_file)
+    result = _build_login_result(True, "cookie_valid", "cookie válido", account_file)
     return result if return_detail else True
 
 
 class BaiJiaHaoVideo(BaseVideoUploader):
-    """百家号视频上传。
+    """Baijiahao envio de vídeo.
 
-    流程：打开发布页 → 上传视频文件 → 填标题 → 等待上传/转码完成 → 等封面生成 → 点击发布。
+    fluxo: abre a página de publicação → envia o arquivo de vídeo → preenche o título → espera o envio e a conversão terminaremído → espera a capa → clicapublicar.
     """
 
     def __init__(
@@ -256,20 +256,20 @@ class BaiJiaHaoVideo(BaseVideoUploader):
 
     async def validate_upload_args(self):
         if not os.path.exists(self.account_file):
-            raise RuntimeError(f"cookie文件不存在，请先完成百家号登录: {self.account_file}")
+            raise RuntimeError(f"cookiearquivo inexistente; conclua antes o ídologin do Baijiahao: {self.account_file}")
         if not await cookie_auth(self.account_file):
-            raise RuntimeError(f"cookie文件已失效，请先完成百家号登录: {self.account_file}")
+            raise RuntimeError(f"cookiearquivo expirado; conclua antes o ídologin do Baijiahao: {self.account_file}")
         if not self.title or not str(self.title).strip():
-            raise ValueError("视频标题不能为空")
+            raise ValueError("o título do vídeo não pode ficar vazio")
         if not self.thumbnail_path:
-            raise ValueError("百家号视频发布必须提供横版封面图（--thumbnail）")
+            raise ValueError("Baijiahao vídeoa publicação exige uma capa na horizontal (--thumbnail)")
         self.file_path = str(self.validate_video_file(self.file_path))
         self.thumbnail_path = str(self.validate_image_file(self.thumbnail_path))
 
     async def upload(self, playwright: Playwright) -> None:
-        baijiahao_logger.info(_msg("🧍", "先检查 cookie 和视频文件"))
+        baijiahao_logger.info(_msg("🧍", "confere o cookie e o arquivo de vídeo"))
         await self.validate_upload_args()
-        baijiahao_logger.info(_msg("🥳", "上传前检查通过"))
+        baijiahao_logger.info(_msg("🥳", "verificação antes do envio concluída"))
 
         browser = await playwright.chromium.launch(**_build_launch_kwargs(headless=self.headless))
         context = await browser.new_context(storage_state=self.account_file)
@@ -278,12 +278,12 @@ class BaiJiaHaoVideo(BaseVideoUploader):
         try:
             page = await context.new_page()
             await page.goto(BAIJIAHAO_PUBLISH_URL, timeout=120000, wait_until="domcontentloaded")
-            baijiahao_logger.info(_msg("🏃", f"开始上传视频: {self.title}"))
+            baijiahao_logger.info(_msg("🏃", f"começando o envio do vídeo: {self.title}"))
 
-            # 等待发布页加载
+            # espera a página de publicação carregar
             await page.wait_for_timeout(3000)
 
-            # 1) 上传视频文件
+            # 1) envia o arquivo de vídeo
             file_input = page.locator('input[type="file"][accept*="video"], input[type="file"][accept*="mp4"]').first
             if not await file_input.count():
                 file_input = page.locator("div[class^='video-main-container'] input[type='file']").first
@@ -291,34 +291,34 @@ class BaiJiaHaoVideo(BaseVideoUploader):
                 file_input = page.locator('input[type="file"]').first
             await file_input.wait_for(state="attached", timeout=30000)
             await file_input.set_input_files(self.file_path)
-            baijiahao_logger.info(_msg("🏃", f"已选择视频文件: {self.file_path}"))
+            baijiahao_logger.info(_msg("🏃", f"arquivo de vídeo escolhido: {self.file_path}"))
 
-            # 2) 等待进入表单页面（contenteditable 标题区出现即表单渲染完毕）
+            # 2) espera entrar no formulário (contenteditable a área do título aparecendo, o formulário terminou de montar)
             title_editor = page.locator('div[class*="contentEditable"]').first
             await title_editor.wait_for(state="visible", timeout=180000)
             await page.wait_for_timeout(1000)
 
-            # 3) 填写标题
+            # 3) preenche o título
             await self._fill_title(page)
 
-            # 4) 等待视频上传完成
+            # 4) espera envio do vídeo concluído
             await self._wait_upload_complete(page)
 
-            # 5) 上传横版封面（必填）
+            # 5) enviarcapa na horizontal (obrigatório)
             await self._upload_thumbnail(page)
 
-            # 6) 勾选「含AI生成内容」
+            # 6) marcar "contém conteúdo gerado por IA"
             await self._check_ai_declaration(page)
 
-            # 7) 选择合集（如有配置）
+            # 7) escolhercoletânea (se estiver configurado)
             await self._apply_collection(page)
 
-            # 8) 点击发布
+            # 8) clicapublicar
             await self._submit_publish(page)
 
-            # 保存 cookie
+            # salva o cookie
             await context.storage_state(path=self.account_file)
-            baijiahao_logger.success(_msg("🥳", "cookie 更新完毕"))
+            baijiahao_logger.success(_msg("🥳", "cookie atualização concluída"))
         finally:
             await context.close()
             await browser.close()
@@ -327,25 +327,25 @@ class BaiJiaHaoVideo(BaseVideoUploader):
         title_field = page.locator('div[class*="contentEditable"]').first
         await title_field.wait_for(state="visible", timeout=15000)
         title = self.title
-        # 百家号标题最少9字
+        # o título do Baijiahao precisa de ao menos 9 caracteres
         if len(title) <= 8:
-            title += " 你不知道的"
+            title += " o que você não sabe"
         title = title[: self.max_title_length]
-        # 清空原有内容（可能自动填了文件名），再输入标题
+        # limpa o que havia (pode ter preenchido com o nome do arquivo), depois digita o título
         await title_field.click()
         await page.keyboard.press("Control+a")
         await page.keyboard.press("Backspace")
         await title_field.fill(title)
-        baijiahao_logger.info(_msg("🏷️", f"标题已填写: {title}"))
+        baijiahao_logger.info(_msg("🏷️", f"título preenchido: {title}"))
 
     async def _wait_upload_complete(self, page: Page, timeout: int = 600) -> None:
-        """等待视频真正上传完成。
+        """espera envio do vídeo realmente concluído.
 
-        百度真实上传进度是一段百分比文字（9%…99%，上传完成后消失，本文件实测约 35s）。
+        o progresso real do Baidu é um texto com a porcentagem (9%…99%, envio concluídosome depois; neste arquivo levou uns 35 s no teste).
         旧实现用 'div .cover-overlay:has-text("上传中")' 判断——经实测该元素恒不存在，
-        导致选完文件立即误判"上传完毕"（约 4s）。大文件此时其实还在后台上传，随后点
-        发布会被百度以"确保视频已经上传完毕"拒绝（产出 0 作品）。改为跟踪百分比进度：
-        出现过进度且进度消失/达 100% 才算真正上传完成。
+        levava a um falso resultado logo após escolher o arquivo "enviarconcluído" (cerca de 4 s).um arquivo grande ainda está subindo em segundo plano; em seguida clica
+        o Baidu recusa a publicação por "garante que envio do vídeo concluído" recusado (nenhuma obra publicada).agora acompanha a porcentagem:
+        só conta como enviado quando houve progresso e ele sumiu ou chegou a 100%ído.
         """
         import re as _re
         start = time.monotonic()
@@ -353,7 +353,7 @@ class BaiJiaHaoVideo(BaseVideoUploader):
         gone_count = 0
         while True:
             if time.monotonic() - start > timeout:
-                baijiahao_logger.warning(_msg("⚠️", f"等待上传超时（>{timeout}s），继续后续步骤"))
+                baijiahao_logger.warning(_msg("⚠️", f"tempo esgotado esperando o envio (>{timeout}s), segue para os próximos passos"))
                 return
 
             body = ""
@@ -362,8 +362,9 @@ class BaiJiaHaoVideo(BaseVideoUploader):
             except Exception:
                 pass
 
+            # o texto em chinês é o que a própria página mostra: não traduzir
             if "上传失败" in body:
-                raise RuntimeError("视频上传失败")
+                raise RuntimeError("falha no envio do vídeo")
 
             m = _re.search(r'(\d{1,3})\s*%', body)
             pct = int(m.group(1)) if m else None
@@ -371,70 +372,70 @@ class BaiJiaHaoVideo(BaseVideoUploader):
             if pct is not None and pct < 100:
                 seen_progress = True
                 gone_count = 0
-                baijiahao_logger.info(_msg("🏃", f"上传中 {pct}%"))
+                baijiahao_logger.info(_msg("🏃", f"enviando {pct}%"))
                 await asyncio.sleep(2)
                 continue
 
             if seen_progress:
-                # 进度百分比已消失/到 100%，连续两次确认后判为上传完成
+                # a porcentagem sumiu ou chegou a 100%: depois de duas confirmações seguidas, considera o envio concluído
                 gone_count += 1
                 if gone_count >= 2:
-                    baijiahao_logger.success(_msg("🥳", "视频上传完毕"))
+                    baijiahao_logger.success(_msg("🥳", "envio do vídeo concluído"))
                     return
                 await asyncio.sleep(2)
                 continue
 
-            # 一直没出现过进度：小文件可能秒传完成；给 15s 窗口后放行
+            # nenhum progresso apareceu: arquivo pequeno pode subir num instanteído; libera depois de uma janela de 15 s
             if time.monotonic() - start > 15:
-                baijiahao_logger.success(_msg("🥳", "视频上传完毕"))
+                baijiahao_logger.success(_msg("🥳", "envio do vídeo concluído"))
                 return
             await asyncio.sleep(2)
 
     async def _upload_thumbnail(self, page: Page) -> None:
-        """上传横版封面（必填）。
+        """enviarcapa na horizontal (obrigatório).
 
-        流程：点击「选择封面」→ 弹窗中点「上传」按钮 → 设置图片文件 → 等待上传完成 → 确认。
-        如果没有提供 thumbnail_path，等待系统自动生成封面即可。
+        fluxo: clica "escolhe a capa"→ na janela, clica "enviar" botão → define o arquivo de imagem → espera o envio terminarído → confirmar.
+        sem thumbnail_path, basta esperar o site gerar a capa sozinho.
         """
         if not self.thumbnail_path:
-            # 没有自定义封面，等系统自动生成
+            # sem capa personalizada: espera o site gerar
             await self._wait_cover_ready(page)
             return
 
         try:
-            # 1) 点击「选择封面」入口
+            # 1) clica "escolhe a capa" entrada
             cover_entry = page.locator('[data-testid="select-cover"]').first
             if not await cover_entry.count():
-                # 备选：通过文本定位
+                # alternativa: localiza pelo texto
                 cover_entry = page.get_by_text("选择封面", exact=True).first
             await cover_entry.scroll_into_view_if_needed()
             await cover_entry.click(timeout=10000)
-            baijiahao_logger.info(_msg("🏃", "已点击「选择封面」"))
+            baijiahao_logger.info(_msg("🏃", "cliquei em escolher a capa"))
             await page.wait_for_timeout(2000)
 
-            # 2) 弹窗中找「上传」按钮并点击
-            # 百家号封面弹窗通常有「上传」tab/按钮
+            # 2) procura na janela "enviar" botão e clica
+            # a janela de capa do Baijiahao costuma ter "enviar" tab/botão
             upload_btn = page.locator('button:has-text("上传"), div:has-text("上传"):not(:has(*)):visible').first
             if not await upload_btn.count():
                 upload_btn = page.get_by_text("上传", exact=True).first
             await upload_btn.click(timeout=8000)
             await page.wait_for_timeout(1500)
 
-            # 3) 设置图片文件到 file input
-            # 弹窗中会出现 input[type=file]
+            # 3) coloca a imagem no campo de arquivo
+            # um input aparece na janela[type=file]
             img_input = page.locator('input[type="file"][accept*="image"], input[type="file"][accept*="jpg"], input[type="file"][accept*="png"]').first
             if not await img_input.count():
-                # 通用 fallback：弹窗内最新出现的 file input
+                # reserva geral: o campo de arquivo mais novo dentro da janela
                 img_input = page.locator('input[type="file"]').last
             await img_input.set_input_files(self.thumbnail_path)
-            baijiahao_logger.info(_msg("🏃", f"已选择封面图片: {self.thumbnail_path}"))
+            baijiahao_logger.info(_msg("🏃", f"imagem de capa escolhida: {self.thumbnail_path}"))
 
-            # 4) 等待并点击确认/完成按钮（如有裁剪弹窗）。
-            #    裁剪弹窗渲染有延迟（图片上传+服务端处理），之前用固定 sleep(3s) 后
-            #    一次性检查 confirm_btn，弹窗还没渲染出来时会被误判为"无需确认"而跳过点击，
-            #    导致封面选择实际未提交，但日志仍打「封面已上传」成功——这是本次线上
-            #    百家号视频没有封面、日志却显示成功的根因。改为轮询等待（不放大超时时长本身
-            #    不算错误：裁剪弹窗本就是可选的，等不到也可能是流程本身没有该弹窗）。
+            # 4) espera e clica em confirmar/concluirídobotão (se houver janela de corte).
+            #    a janela de corte demora a aparecer (envio das imagens + processamento no servidor); antes havia um sleep fixo de 3 s e depois
+            #    checar o confirm_btn de uma vez, antes de a janela existir, dá falso "não precisa confirmar" e pular o clique,
+            #    a capa escolhida não era enviada, mas o log dizia que sim "capa enviada" sucesso — foi o que aconteceu em produção
+            #    Baijiahao vídeoera a causa de capa faltando com log de sucesso; agora fica verificando (sem aumentar o tempo limite em si
+            #    não é erro: a janela de corte é opcional e pode simplesmente não existir nesse fluxo).
             confirm_btn = page.locator('button:has-text("确定"), button:has-text("完成"), button:has-text("确认")').first
             confirmed = False
             try:
@@ -443,32 +444,32 @@ class BaiJiaHaoVideo(BaseVideoUploader):
                 await page.wait_for_timeout(1000)
                 confirmed = True
             except PWTimeoutError:
-                baijiahao_logger.debug("封面确认按钮未出现，可能本次流程无需裁剪确认")
+                baijiahao_logger.debug("botão de confirmar a capaãonão apareceu: talvez este fluxo não precise confirmar o corte")
 
             if confirmed:
-                baijiahao_logger.success(_msg("🖼️", "封面已上传"))
+                baijiahao_logger.success(_msg("🖼️", "capa enviada"))
             else:
-                # 没有等到确认按钮：不确定封面是否真正生效，不再冒充成功，
-                # 交给下方 except 分支同一套"等待系统自动封面"兜底逻辑核实/兜底。
-                raise RuntimeError("封面确认按钮未出现，无法确认封面是否生效")
+                # o botão de confirmar não apareceuão: não confirma se a capa pegou, e não finge sucesso,
+                # deixa para o mesmo tratamento do except abaixo "espera a capa automática" conferência de reserva.
+                raise RuntimeError("botão de confirmar a capaãonão apareceu: não dá para confirmar se a capa pegou")
         except Exception as exc:
-            baijiahao_logger.warning(_msg("⚠️", f"封面上传失败: {exc}，尝试等待系统自动封面"))
-            # fallback：等系统自动生成
+            baijiahao_logger.warning(_msg("⚠️", f"falha ao enviar a capa: {exc}, tenta esperar a capa automática"))
+            # fallback: espera o site gerar
             await self._wait_cover_ready(page)
 
     async def _check_ai_declaration(self, page: Page) -> None:
-        """选择「含AI生成内容」创作声明。
+        """escolher" contém conteúdo gerado por IA " declaração de criação.
 
-        点击「请选择创作声明」input → 弹出 modal 弹窗 → 点选「含AI生成内容」→ 点「确定」。
+        clica no campo da declaração de criação → abre a janela → escolhe "contém conteúdo gerado por IA" → confirma.
         """
         try:
-            # 点击创作声明输入框触发弹窗
+            # clicao campo da declaração abre a janela
             trigger = page.locator('input[placeholder="请选择创作声明"]').first
             await trigger.scroll_into_view_if_needed()
             await trigger.click(force=True, timeout=8000)
             await page.wait_for_timeout(3000)
 
-            # 弹窗内点选「含AI生成内容」
+            # escolhe dentro da janela "contém conteúdo gerado por IA"
             ai_option = page.locator('.cheetah-modal-wrap :text("含AI生成内容")').first
             if not await ai_option.count():
                 ai_option = page.locator('text="含AI生成内容"').first
@@ -476,7 +477,7 @@ class BaiJiaHaoVideo(BaseVideoUploader):
             await ai_option.click(timeout=5000)
             await page.wait_for_timeout(1000)
 
-            # 点「确定」按钮关闭弹窗（弹窗可能在点选后仍存在）
+            # clica em confirmar e fecha a janela (ela pode continuar aberta depois da escolha)
             modal = page.locator('.cheetah-modal-wrap:visible').first
             if await modal.count():
                 confirm_btn = modal.locator('button:has-text("确定")').first
@@ -484,81 +485,81 @@ class BaiJiaHaoVideo(BaseVideoUploader):
                     await confirm_btn.click(timeout=5000)
                     await page.wait_for_timeout(500)
                 else:
-                    # 确定按钮不可见，尝试 force click 或按 Escape 关闭
+                    # confirmarbotãoinvisível: tenta clique forçado ou fecha com Escape
                     await page.keyboard.press("Escape")
                     await page.wait_for_timeout(500)
 
-            baijiahao_logger.success(_msg("🏷️", "已选择「含AI生成内容」"))
+            baijiahao_logger.success(_msg("🏷️", "escolhi a opção de conteúdo gerado por IA"))
         except Exception as exc:
-            # 如果失败，尝试关闭可能残留的弹窗
+            # falhando, tenta fechar alguma janela que tenha sobrado
             try:
                 await page.keyboard.press("Escape")
                 await page.wait_for_timeout(500)
             except Exception:
                 pass
-            baijiahao_logger.warning(_msg("⚠️", f"选择 AI 声明失败: {exc}"))
+            baijiahao_logger.warning(_msg("⚠️", f"escolher AI falha na declaração: {exc}"))
 
     async def _apply_collection(self, page: Page) -> None:
-        """选择合集（cheetah-select 下拉搜索框）。
+        """escolhercoletânea (cheetah-select busca da lista).
 
-        placeholder: "选择同主题的合集，可获得更多播放机会"
-        有 collection_name 时点开下拉 → 搜索/选中目标合集；没有则跳过。
+        placeholder: "escolhercoletâneas do mesmo tema costumam render mais visualizações"
+        com collection_name, abre a lista → busca e seleciona a coletânea; se não houver, pula.
         """
         if not self.collection_name:
             return
         try:
-            # 定位合集下拉框（通过 placeholder 文案）
+            # acha a lista de coletâneas (pelo texto do placeholder)
             select_box = page.locator('.cheetah-select:has(.cheetah-select-selection-placeholder:has-text("选择同主题的合集"))').first
             if not await select_box.count():
                 select_box = page.locator('.cheetah-select-selection-placeholder:has-text("合集")').locator('xpath=ancestor::div[contains(@class,"cheetah-select")]').first
             if not await select_box.count():
-                baijiahao_logger.warning(_msg("⚠️", "未找到合集选择器，跳过"))
+                baijiahao_logger.warning(_msg("⚠️", "não achei o seletor de coletânea; pulando"))
                 return
 
             await select_box.scroll_into_view_if_needed()
             await select_box.click(timeout=8000)
             await page.wait_for_timeout(1500)
 
-            # 在搜索框中输入合集名（触发搜索过滤）
+            # digita o nome da coletânea na busca (dispara o filtro da busca)
             search_input = select_box.locator('input.cheetah-select-selection-search-input').first
             if await search_input.count():
                 await search_input.fill(self.collection_name)
                 await page.wait_for_timeout(1500)
 
-            # 从下拉选项中选中目标合集
+            # seleciona a coletânea na lista
             option = page.locator(f'[role="option"]:has-text("{self.collection_name}"), .cheetah-select-item:has-text("{self.collection_name}")').first
             if await option.count():
                 await option.click(timeout=5000)
                 await page.wait_for_timeout(500)
-                baijiahao_logger.success(_msg("🥳", f"已选择合集：{self.collection_name}"))
+                baijiahao_logger.success(_msg("🥳", f"coletânea escolhida: {self.collection_name}"))
             else:
-                baijiahao_logger.warning(_msg("⚠️", f"账号中无「{self.collection_name}」合集，跳过"))
+                baijiahao_logger.warning(_msg("⚠️", f"a conta não tem a coletânea '{self.collection_name}': pulando"))
                 await page.keyboard.press("Escape")
         except Exception as exc:
-            baijiahao_logger.warning(_msg("⚠️", f"选择合集失败，跳过: {exc}"))
+            baijiahao_logger.warning(_msg("⚠️", f"escolherfalhou na coletânea; pulando: {exc}"))
 
     async def _wait_cover_ready(self, page: Page, timeout: int = 120) -> None:
-        """等待百家号自动生成封面图。"""
+        """espera o Baijiahao gerar a capa."""
         start = time.monotonic()
         while True:
             if time.monotonic() - start > timeout:
-                baijiahao_logger.warning(_msg("⚠️", "等待封面生成超时，继续发布"))
+                baijiahao_logger.warning(_msg("⚠️", "tempo esgotado esperando a capa ser gerada; seguindo a publicação"))
                 return
             if await page.locator("div.cheetah-spin-container img").count():
-                baijiahao_logger.info(_msg("🖼️", "封面已生成"))
+                baijiahao_logger.info(_msg("🖼️", "capa gerada"))
                 return
-            baijiahao_logger.info(_msg("🏃", "等待封面生成..."))
+            baijiahao_logger.info(_msg("🏃", "esperando a capa ser gerada..."))
             await asyncio.sleep(3)
 
     async def _submit_publish(self, page: Page) -> None:
-        """点击发布按钮并确认成功。"""
-        # 确保没有残留弹窗遮挡
+        """clicabotão de publicare confirma o sucesso."""
+        # garante que nenhuma janela ficou cobrindo
         modal = page.locator('.cheetah-modal-wrap:visible').first
         if await modal.count():
             await page.keyboard.press("Escape")
             await page.wait_for_timeout(1000)
 
-        # 百家号发布按钮有 data-testid="publish-btn"
+        # botão de publicar do Baijiahaoãotem data-testid="publish-btn"
         publish_btn = page.locator('[data-testid="publish-btn"]').first
         if not await publish_btn.count():
             publish_btn = page.locator('button:text-is("发布")').first
@@ -566,31 +567,31 @@ class BaiJiaHaoVideo(BaseVideoUploader):
             publish_btn = page.locator('button:has-text("发布")').last
         await publish_btn.wait_for(state="visible", timeout=15000)
         await publish_btn.click(force=True)
-        baijiahao_logger.info(_msg("🏃", "已点击发布按钮"))
+        baijiahao_logger.info(_msg("🏃", "cliquei no botão de publicar"))
 
-        # 等待跳转或成功提示（最多30s）
+        # espera a navegação ou a mensagem de sucesso (no máximo 30 s)
         start = time.monotonic()
         while time.monotonic() - start < 30:
             url = page.url
-            # 发布成功跳转
+            # publicado, navegando
             if BAIJIAHAO_SUCCESS_URL_PREFIX in url or "/rc/content" in url or "/rc/home" in url:
-                baijiahao_logger.success(_msg("🥳", "视频发布成功"))
+                baijiahao_logger.success(_msg("🥳", "vídeo publicado"))
                 return
-            # 检查是否出现百度安全验证
+            # vê se apareceu a verificação de segurança do Baidução
             if await page.locator('text="百度安全验证"').count():
-                raise RuntimeError("出现百度安全验证，需人工处理")
-            # 检查是否有错误提示阻止发布
+                raise RuntimeError("apareceuverificação de segurança do Baidução, precisa de intervenção manual")
+            # vê se algum aviso de erro impede a publicação
             error_toast = page.locator('.cheetah-message-error, .cheetah-message-warning').first
             if await error_toast.count() and await error_toast.is_visible():
                 err_text = await error_toast.inner_text()
-                baijiahao_logger.warning(_msg("⚠️", f"发布提示: {err_text}"))
+                baijiahao_logger.warning(_msg("⚠️", f"aviso de publicação: {err_text}"))
             await page.wait_for_timeout(1000)
 
-        # 超时后再检查一次
+        # tempo esgotado; confere de novo
         if BAIJIAHAO_SUCCESS_URL_PREFIX in page.url or "/rc/content" in page.url:
-            baijiahao_logger.success(_msg("🥳", "视频发布成功"))
+            baijiahao_logger.success(_msg("🥳", "vídeo publicado"))
         else:
-            raise RuntimeError(f"发布后未跳转到成功页面（30s），当前 URL: {page.url}")
+            raise RuntimeError(f"publiquei e não fui para a página de sucesso (30s), URL atual: {page.url}")
 
     async def main(self):
         async with async_playwright() as playwright:

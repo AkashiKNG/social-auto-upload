@@ -1,41 +1,41 @@
-# Bilibili CLI 契约
+# Contrato da CLI do Bilibili
 
-这个 skill 默认假设当前环境已经安装并可调用 `sau` 命令。
+Esta skill parte do princípio de que o comando `sau` já está instalado e disponível.
 
-## 命令列表
+## Lista de comandos
 
-### 登录
+### Entrar na conta
 
 ```bash
 sau bilibili login --account <account>
 ```
 
-- 必填参数：
+- Obrigatório:
   - `--account`
-- 作用：
-  - 自动准备 `biliup`
-  - 触发 Bilibili 登录流程
-- 账号说明：
-  - `--account` 传的是用户自定义的 `account_name`，不是固定只能叫 `creator`
-  - 一个 `account_name` 对应一个账号文件，可用于多账号隔离和并发任务
-- 登录方式说明：
-  - 这个命令应该由用户自己在本地真实终端里运行
-  - 如果终端二维码显示不完整，可直接打开当前目录下的 `qrcode.png` 扫码
-  - agent 不应该在非交互环境里硬跑这个命令
+- O que faz:
+  - prepara o `biliup` sozinho
+  - inicia o login no Bilibili
+- Sobre a conta:
+  - o `--account` recebe o `account_name` escolhido pelo usuário; não precisa se chamar `creator`
+  - cada `account_name` corresponde a um arquivo de conta, o que permite várias contas e tarefas em paralelo
+- Sobre o login:
+  - este comando deve ser rodado pelo próprio usuário, num terminal de verdade
+  - se o QR code sair cortado no terminal, basta abrir o `qrcode.png` da pasta atual
+  - o agente não deve forçar este comando em ambiente não interativo
 
-### 校验账号
+### Validar a conta
 
 ```bash
 sau bilibili check --account <account>
 ```
 
-- 必填参数：
+- Obrigatório:
   - `--account`
-- 预期输出：
+- Saída esperada:
   - `valid`
   - `invalid`
 
-### 上传视频
+### Enviar vídeo
 
 ```bash
 sau bilibili upload-video \
@@ -48,19 +48,19 @@ sau bilibili upload-video \
   [--schedule "YYYY-MM-DD HH:MM"]
 ```
 
-- 必填参数：
+- Obrigatório:
   - `--account`
   - `--file`
   - `--title`
   - `--desc`
   - `--tid`
-- 可选参数：
+- Opcional:
   - `--tags`
   - `--schedule`
 
-## 额外说明
+## Observações
 
-- `--tid` 第一版必须传
-- `--tags` 使用逗号分隔
-- `--schedule` 走 `sau` 统一时间格式
-- 程序会自动准备和更新 `biliup`
+- o `--tid` é obrigatório nesta primeira versão
+- as `--tags` vão separadas por vírgula
+- o `--schedule` usa o mesmo formato de data e hora do `sau`
+- o programa prepara e atualiza o `biliup` sozinho

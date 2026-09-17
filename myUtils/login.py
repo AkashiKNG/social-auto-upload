@@ -9,28 +9,28 @@ import uuid
 from pathlib import Path
 from conf import BASE_DIR, LOCAL_CHROME_HEADLESS, LOCAL_CHROME_PATH
 
-# 统一获取浏览器启动配置（防风控+引入本地浏览器）
+# configuração única do navegador (evita bloqueio e permite usar o Chrome local)
 def get_browser_options():
     options = {
         'headless': LOCAL_CHROME_HEADLESS,
         'args': [
-            '--disable-blink-features=AutomationControlled',  # 核心防爬屏蔽：去掉 window.navigator.webdriver 标签
+            '--disable-blink-features=AutomationControlled',  # esconde window.navigator.webdriver, a marca que entrega a automação
             '--lang=zh-CN',
             '--disable-infobars',
             '--start-maximized'
         ]
     }
-    # 如果用户在 conf.py 里配置了本地 Chrome，就用本地的，这样成功率极高
+    # com o Chrome local configurado no conf.py, a taxa de sucesso é bem maior
     if LOCAL_CHROME_PATH:
         options['executable_path'] = LOCAL_CHROME_PATH
 
     return options
 
-# 抖音登录
+# login do Douyin
 async def douyin_cookie_gen(id,status_queue):
     url_changed_event = asyncio.Event()
     async def on_url_change():
-        # 检查是否是主框架的变化
+        # só interessa a mudança do frame principal
         if page.url != original_url:
             url_changed_event.set()
     async with async_playwright() as playwright:
@@ -45,19 +45,19 @@ async def douyin_cookie_gen(id,status_queue):
         await page.goto("https://creator.douyin.com/")
         original_url = page.url
         img_locator = page.get_by_role("img", name="二维码")
-        # 获取 src 属性值
+        # pega o atributo src
         src = await img_locator.get_attribute("src")
-        print("✅ 图片地址:", src)
+        print("✅ endereço da imagem:", src)
         status_queue.put(src)
-        # 监听页面的 'framenavigated' 事件，只关注主框架的变化
+        # escuta o evento 'framenavigated', só do frame principal
         page.on('framenavigated',
                 lambda frame: asyncio.create_task(on_url_change()) if frame == page.main_frame else None)
         try:
-            # 等待 URL 变化或超时
-            await asyncio.wait_for(url_changed_event.wait(), timeout=200)  # 最多等待 200 秒
-            print("监听页面跳转成功")
+            # espera a URL mudar (ou estourar o tempo)
+            await asyncio.wait_for(url_changed_event.wait(), timeout=200)  # no máximo 200 s
+            print("a página navegou como esperado")
         except asyncio.TimeoutError:
-            print("监听页面跳转超时")
+            print("tempo esgotado esperando a navegação")
             await page.close()
             await context.close()
             await browser.close()
@@ -65,7 +65,7 @@ async def douyin_cookie_gen(id,status_queue):
             return None
         uuid_v1 = uuid.uuid1()
         print(f"UUID v1: {uuid_v1}")
-        # 确保cookiesFile目录存在
+        # garante que a pasta cookiesFile existe
         cookies_dir = Path(BASE_DIR / "cookiesFile")
         cookies_dir.mkdir(exist_ok=True)
         await context.storage_state(path=cookies_dir / f"{uuid_v1}.json")
@@ -86,15 +86,15 @@ async def douyin_cookie_gen(id,status_queue):
                                 VALUES (?, ?, ?, ?)
                                 ''', (3, f"{uuid_v1}.json", id, 1))
             conn.commit()
-            print("✅ 用户状态已记录")
+            print("✅ sessão do usuário salva")
         status_queue.put("200")
 
 
-# 视频号登录
+# login do Canal do WeChat
 async def get_tencent_cookie(id,status_queue):
     url_changed_event = asyncio.Event()
     async def on_url_change():
-        # 检查是否是主框架的变化
+        # só interessa a mudança do frame principal
         if page.url != original_url:
             url_changed_event.set()
 
@@ -115,35 +115,35 @@ async def get_tencent_cookie(id,status_queue):
         await page.goto("https://channels.weixin.qq.com")
         original_url = page.url
 
-        # 监听页面的 'framenavigated' 事件，只关注主框架的变化
+        # escuta o evento 'framenavigated', só do frame principal
         page.on('framenavigated',
                 lambda frame: asyncio.create_task(on_url_change()) if frame == page.main_frame else None)
 
-        # 等待 iframe 出现（最多等 60 秒）
+        # espera o iframe aparecer (até 60 s)
         iframe_locator = page.frame_locator("iframe").first
 
-        # 获取 iframe 中的第一个 img 元素
+        # pega a primeira img dentro do iframe
         img_locator = iframe_locator.get_by_role("img").first
 
-        # 获取 src 属性值
+        # pega o atributo src
         src = await img_locator.get_attribute("src")
-        print("✅ 图片地址:", src)
+        print("✅ endereço da imagem:", src)
         status_queue.put(src)
 
         try:
-            # 等待 URL 变化或超时
-            await asyncio.wait_for(url_changed_event.wait(), timeout=200)  # 最多等待 200 秒
-            print("监听页面跳转成功")
+            # espera a URL mudar (ou estourar o tempo)
+            await asyncio.wait_for(url_changed_event.wait(), timeout=200)  # no máximo 200 s
+            print("a página navegou como esperado")
         except asyncio.TimeoutError:
             status_queue.put("500")
-            print("监听页面跳转超时")
+            print("tempo esgotado esperando a navegação")
             await page.close()
             await context.close()
             await browser.close()
             return None
         uuid_v1 = uuid.uuid1()
         print(f"UUID v1: {uuid_v1}")
-        # 确保cookiesFile目录存在
+        # garante que a pasta cookiesFile existe
         cookies_dir = Path(BASE_DIR / "cookiesFile")
         cookies_dir.mkdir(exist_ok=True)
         await context.storage_state(path=cookies_dir / f"{uuid_v1}.json")
@@ -165,14 +165,14 @@ async def get_tencent_cookie(id,status_queue):
                                 VALUES (?, ?, ?, ?)
                                 ''', (2, f"{uuid_v1}.json", id, 1))
             conn.commit()
-            print("✅ 用户状态已记录")
+            print("✅ sessão do usuário salva")
         status_queue.put("200")
 
-# 快手登录
+# login do Kuaishou
 async def get_ks_cookie(id,status_queue):
     url_changed_event = asyncio.Event()
     async def on_url_change():
-        # 检查是否是主框架的变化
+        # só interessa a mudança do frame principal
         if page.url != original_url:
             url_changed_event.set()
     async with async_playwright() as playwright:
@@ -191,33 +191,33 @@ async def get_ks_cookie(id,status_queue):
         page = await context.new_page()
         await page.goto("https://cp.kuaishou.com")
 
-        # 定位并点击“立即登录”按钮（类型为 link）
+        # acha e clica no botão de entrar (é um link)
         await page.get_by_role("link", name="立即登录").click()
         await page.get_by_text("扫码登录").click()
         img_locator = page.get_by_role("img", name="qrcode")
-        # 获取 src 属性值
+        # pega o atributo src
         src = await img_locator.get_attribute("src")
         original_url = page.url
-        print("✅ 图片地址:", src)
+        print("✅ endereço da imagem:", src)
         status_queue.put(src)
-        # 监听页面的 'framenavigated' 事件，只关注主框架的变化
+        # escuta o evento 'framenavigated', só do frame principal
         page.on('framenavigated',
                 lambda frame: asyncio.create_task(on_url_change()) if frame == page.main_frame else None)
 
         try:
-            # 等待 URL 变化或超时
-            await asyncio.wait_for(url_changed_event.wait(), timeout=200)  # 最多等待 200 秒
-            print("监听页面跳转成功")
+            # espera a URL mudar (ou estourar o tempo)
+            await asyncio.wait_for(url_changed_event.wait(), timeout=200)  # no máximo 200 s
+            print("a página navegou como esperado")
         except asyncio.TimeoutError:
             status_queue.put("500")
-            print("监听页面跳转超时")
+            print("tempo esgotado esperando a navegação")
             await page.close()
             await context.close()
             await browser.close()
             return None
         uuid_v1 = uuid.uuid1()
         print(f"UUID v1: {uuid_v1}")
-        # 确保cookiesFile目录存在
+        # garante que a pasta cookiesFile existe
         cookies_dir = Path(BASE_DIR / "cookiesFile")
         cookies_dir.mkdir(exist_ok=True)
         await context.storage_state(path=cookies_dir / f"{uuid_v1}.json")
@@ -239,15 +239,15 @@ async def get_ks_cookie(id,status_queue):
                                         VALUES (?, ?, ?, ?)
                                         ''', (4, f"{uuid_v1}.json", id, 1))
             conn.commit()
-            print("✅ 用户状态已记录")
+            print("✅ sessão do usuário salva")
         status_queue.put("200")
 
-# 小红书登录
+# login do Xiaohongshu
 async def xiaohongshu_cookie_gen(id,status_queue):
     url_changed_event = asyncio.Event()
 
     async def on_url_change():
-        # 检查是否是主框架的变化
+        # só interessa a mudança do frame principal
         if page.url != original_url:
             url_changed_event.set()
 
@@ -269,29 +269,29 @@ async def xiaohongshu_cookie_gen(id,status_queue):
         await page.locator('img.css-wemwzq').click()
 
         img_locator = page.get_by_role("img").nth(2)
-        # 获取 src 属性值
+        # pega o atributo src
         src = await img_locator.get_attribute("src")
         original_url = page.url
-        print("✅ 图片地址:", src)
+        print("✅ endereço da imagem:", src)
         status_queue.put(src)
-        # 监听页面的 'framenavigated' 事件，只关注主框架的变化
+        # escuta o evento 'framenavigated', só do frame principal
         page.on('framenavigated',
                 lambda frame: asyncio.create_task(on_url_change()) if frame == page.main_frame else None)
 
         try:
-            # 等待 URL 变化或超时
-            await asyncio.wait_for(url_changed_event.wait(), timeout=200)  # 最多等待 200 秒
-            print("监听页面跳转成功")
+            # espera a URL mudar (ou estourar o tempo)
+            await asyncio.wait_for(url_changed_event.wait(), timeout=200)  # no máximo 200 s
+            print("a página navegou como esperado")
         except asyncio.TimeoutError:
             status_queue.put("500")
-            print("监听页面跳转超时")
+            print("tempo esgotado esperando a navegação")
             await page.close()
             await context.close()
             await browser.close()
             return None
         uuid_v1 = uuid.uuid1()
         print(f"UUID v1: {uuid_v1}")
-        # 确保cookiesFile目录存在
+        # garante que a pasta cookiesFile existe
         cookies_dir = Path(BASE_DIR / "cookiesFile")
         cookies_dir.mkdir(exist_ok=True)
         await context.storage_state(path=cookies_dir / f"{uuid_v1}.json")
@@ -313,7 +313,7 @@ async def xiaohongshu_cookie_gen(id,status_queue):
                            VALUES (?, ?, ?, ?)
                            ''', (1, f"{uuid_v1}.json", id, 1))
             conn.commit()
-            print("✅ 用户状态已记录")
+            print("✅ sessão do usuário salva")
         status_queue.put("200")
 
 # a = asyncio.run(xiaohongshu_cookie_gen(4,None))

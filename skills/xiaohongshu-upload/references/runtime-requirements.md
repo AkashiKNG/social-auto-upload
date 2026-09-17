@@ -1,67 +1,67 @@
-# 运行前提
+# Pré-requisitos
 
-这个 skill 默认假设当前环境已经具备：
+Esta skill parte do princípio de que o ambiente já tem:
 
-- 已安装 `social-auto-upload`
-- 可以调用 `sau` 命令，或至少有等效调用方式
-- 已为 `patchright` 安装 Chromium
+- o `social-auto-upload` instalado
+- o comando `sau` disponível, ou uma forma equivalente de chamá-lo
+- o Chromium instalado para o `patchright`
 
-## 推荐安装方式
+## Instalação recomendada
 
-在项目根目录执行：
+Na raiz do projeto:
 
 ```bash
 uv pip install -e .
 ```
 
-## 安装 patchright 浏览器
+## Instalar o navegador do patchright
 
-Windows PowerShell：
+Windows PowerShell:
 
 ```powershell
 $env:PLAYWRIGHT_DOWNLOAD_HOST="https://npmmirror.com/mirrors/playwright"; patchright install chromium
 ```
 
-Linux / macOS（bash / zsh）：
+Linux / macOS (bash / zsh):
 
 ```bash
 PLAYWRIGHT_DOWNLOAD_HOST="https://npmmirror.com/mirrors/playwright" patchright install chromium
 ```
 
-## 常见调用方式
+## Formas de chamar
 
-### 如果 `sau` 已经在 PATH 中
+### Se o `sau` já está no PATH
 
 ```bash
 sau xiaohongshu --help
 ```
 
-### 如果虚拟环境存在，但还没有激活
+### Se o ambiente virtual existe mas não está ativado
 
-PowerShell：
+PowerShell:
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
 sau xiaohongshu --help
 ```
 
-### 如果你想直接调用可执行文件
+### Se você quer chamar o executável direto
 
-PowerShell：
+PowerShell:
 
 ```powershell
 .\.venv\Scripts\sau.exe xiaohongshu --help
 ```
 
-### 如果你更倾向于使用 uv
+### Se você prefere o uv
 
 ```bash
 uv run sau xiaohongshu --help
 ```
 
-## 无头和有头模式
+## Com e sem janela
 
-- 使用 `--headless` 表示无头模式
-- 使用 `--headed` 表示有头模式
-- 如果用户明确要求无头登录，也要预期 CLI 会通过控制台输出或临时图片路径提供二维码相关提示
-- 如果登录过程中已经生成了本地二维码图片，agent 应优先直接把图片展示/发送给用户扫码，不要只告诉用户图片路径
+- `--headless` roda sem janela
+- `--headed` roda com janela
+- Quando o usuário pedir login sem janela, espere que a CLI informe o QR code pelo console ou pelo caminho de uma imagem temporária
+- Se o login gerar uma imagem de QR code, mostre ou envie a imagem ao usuário em vez de só informar o caminho

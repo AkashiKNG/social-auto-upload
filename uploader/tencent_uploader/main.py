@@ -95,17 +95,17 @@ def _get_qrcode_utils():
 
 
 def format_str_for_short_title(origin_title: str) -> str:
-    allowed_special_chars = "《》“”:+?%°"
+    allowed_special_chars = "《》"":+?%°"
     filtered_chars = [char if char.isalnum() or char in allowed_special_chars else " " if char == "," else "" for char in origin_title]
     formatted_string = "".join(filtered_chars)
 
-    # 视频号「短标题」要求 6~16 个字符/汉字；本项目按 >6 且 <16 从严控制在 7~15。
+    # o título curto do Canal do WeChat exige de 6 a 16 caracteres; aqui mantemos entre 7 e 15.
     formatted_string = formatted_string.strip()
     if len(formatted_string) > 15:
         formatted_string = formatted_string[:15]
     if len(formatted_string) < 7:
-        # 不足下限时补足到 7；不能用尾部空格（会被平台 trim 掉导致仍不达标）
-        filler = "，精彩内容分享"
+        # abaixo do mínimo, completa até 7; sem espaços no fim (o site corta os espaços e o tamanho continua insuficiente)
+        filler = "，精彩内容分享"  # texto enviado ao próprio site: não traduzir
         formatted_string = (formatted_string + filler)[:7] if formatted_string else "精彩视频内容分享"
 
     return formatted_string
@@ -121,25 +121,25 @@ async def cookie_auth(account_file):
             page = await context.new_page()
             await page.goto(TENCENT_UPLOAD_URL, wait_until="domcontentloaded")
 
-            # cookie 失效时, 页面先停在 post/create, 随后由前端 JS 跳转到登录页;
-            # 必须等待跳转完成再判断, 否则会误报"cookie 有效"
+            # cookie quando expira, a página para em post/create, depois o JS do site redireciona para a página de login;
+            # é preciso esperar a navegação terminarídoe então decide, senão dá alarme falso "cookie válido"
             try:
                 await page.wait_for_url("**/login.html**", timeout=8000)
-                tencent_logger.info(_msg("🥹", "cookie 已失效（页面跳转到登录页），得重新登录一下"))
+                tencent_logger.info(_msg("🥹", "cookie expirado (a página redirecionou para a página de login), é preciso entrar de novo"))
                 return False
             except Exception:
-                pass  # 8 秒内未跳转, 大概率已登录
+                pass  # 8 s sem navegar, provavelmente já está conectado
 
-            # 双保险: 页面里出现微信扫码登录 iframe 也视为失效
+            # dupla garantia: se o iframe de login do WeChat aparecer na página, também conta como expirado
             for fr in page.frames:
                 if "open.weixin.qq.com/connect/qrconnect" in fr.url:
-                    tencent_logger.info(_msg("🥹", "cookie 已失效（页面出现扫码登录框），得重新登录一下"))
+                    tencent_logger.info(_msg("🥹", "cookie expirado (a janela de login por QR code apareceu), é preciso entrar de novo"))
                     return False
 
-            tencent_logger.success(_msg("🥳", "cookie 有效"))
+            tencent_logger.success(_msg("🥳", "cookie válido"))
             return True
         except Exception as exc:
-            tencent_logger.warning(_msg("😵", f"cookie 校验时出错，按失效处理: {exc}"))
+            tencent_logger.warning(_msg("😵", f"cookie erro na verificação: tratando como expirado: {exc}"))
             return False
         finally:
             await browser.close()
@@ -157,8 +157,8 @@ async def _extract_tencent_qrcode_src(page: Page) -> str:
         except Exception:
             pass
 
-    # 2026 新版登录页: 二维码在 open.weixin.qq.com/connect/qrconnect 的 iframe 里,
-    # img.qrcode 的 src 是相对路径(如 /connect/qrcode/xxxx), 需要下载后转成 data URL
+    # 2026 tela de login nova: o QR code fica no iframe de open.weixin.qq.com/connect/qrconnect,
+    # img.qrcode  tem src relativo(ex.: /connect/qrcode/xxxx), precisa baixar e converter para data URL
     for frame in page.frames:
         if "open.weixin.qq.com/connect/qrconnect" not in frame.url:
             continue
@@ -201,7 +201,7 @@ async def _extract_tencent_qrcode_src(page: Page) -> str:
         except Exception:
             continue
 
-    raise RuntimeError("未获取到视频号登录二维码地址")
+    raise RuntimeError("não consegui pegar o endereço do QR code do Canal do WeChat")
 
 
 async def _save_tencent_qrcode(page: Page, account_file: str, previous_qrcode_path: Path | None = None, qrcode_callback=None) -> dict:
@@ -213,17 +213,17 @@ async def _save_tencent_qrcode(page: Page, account_file: str, previous_qrcode_pa
     )
     if previous_qrcode_path and previous_qrcode_path != qrcode_path:
         if qrcode_utils["remove_qrcode_file"](previous_qrcode_path):
-            tencent_logger.info(_msg("🧹", f"临时二维码文件已清理: {previous_qrcode_path}"))
+            tencent_logger.info(_msg("🧹", f"arquivo temporário do QR code apagado: {previous_qrcode_path}"))
 
-    tencent_logger.info(_msg("🖼️", f"二维码已经准备好啦，已保存到: {qrcode_path}"))
+    tencent_logger.info(_msg("🖼️", f"QR code pronto, salvo em: {qrcode_path}"))
     qrcode_content = qrcode_utils["decode_qrcode_from_path"](qrcode_path)
     if qrcode_content:
-        qrcode_utils["print_terminal_qrcode"](qrcode_content, qrcode_path, "微信")
+        qrcode_utils["print_terminal_qrcode"](qrcode_content, qrcode_path, "WeChat")
     else:
         tencent_logger.warning(
             _msg(
                 "😵",
-                f"没能从二维码图片里解析出可打印内容，所以这次没法在终端重绘二维码；请直接打开 {qrcode_path} 扫码",
+                f"não consegui extrair da imagem um conteúdo que dê para desenhar no terminal; abra direto {qrcode_path} escanear o QR code",
             )
         )
 
@@ -339,7 +339,7 @@ async def _refresh_tencent_qrcode(page: Page) -> None:
         await fallback_refresh.click()
         return
 
-    raise RuntimeError("未找到可点击的视频号二维码刷新区域")
+    raise RuntimeError("não achei onde clicar para atualizar o QR code do Canal do WeChat")
 
 
 async def _wait_for_tencent_login(
@@ -354,15 +354,15 @@ async def _wait_for_tencent_login(
     scanned_logged = False
     for _ in range(max_checks):
         if await _is_tencent_login_completed(page):
-            tencent_logger.info(_msg("🥳", f"扫码成功，已经跳转到登录后页面: {page.url}"))
-            return _build_login_result(True, "success", "视频号扫码登录成功", account_file, qrcode_info, page.url)
+            tencent_logger.info(_msg("🥳", f"QR code lido: já estou na página de quem entrou: {page.url}"))
+            return _build_login_result(True, "success", "Canal do WeChatlogin por QR codedeu certo", account_file, qrcode_info, page.url)
 
         if not scanned_logged and await _is_tencent_qrcode_scanned(page):
-            tencent_logger.info(_msg("📱", "已经扫码啦，还差手机端确认一下"))
+            tencent_logger.info(_msg("📱", "QR code lido: falta confirmar no celular"))
             scanned_logged = True
 
         if await _is_tencent_qrcode_expired(page):
-            tencent_logger.warning(_msg("😵", "二维码失效了，小人马上去刷新"))
+            tencent_logger.warning(_msg("😵", "o QR code expirou; gerando outro"))
             await _refresh_tencent_qrcode(page)
             await asyncio.sleep(1)
             try:
@@ -374,11 +374,11 @@ async def _wait_for_tencent_login(
                 )
                 qrcode_path = Path(qrcode_info["image_path"])
             except Exception as exc:
-                tencent_logger.warning(_msg("⚠️", f"刷新后未能重新提取二维码({exc})，请直接在浏览器窗口中扫码"))
+                tencent_logger.warning(_msg("⚠️", f"depois de atualizar, não consegui pegar o QR code de novo({exc}), escaneie o QR code direto na janela do navegador"))
 
         await asyncio.sleep(poll_interval)
 
-    return _build_login_result(False, "timeout", "等待视频号扫码登录超时", account_file, qrcode_info, page.url)
+    return _build_login_result(False, "timeout", "tempo esgotado esperando o login por QR code do Canal do WeChat", account_file, qrcode_info, page.url)
 
 
 async def tencent_cookie_gen(
@@ -395,7 +395,7 @@ async def tencent_cookie_gen(
         browser = await playwright.chromium.launch(**_build_launch_kwargs(headless=headless))
         context = await browser.new_context()
         qrcode_path = None
-        result = _build_login_result(False, "failed", "视频号登录失败", account_file)
+        result = _build_login_result(False, "failed", "Canal do WeChatfalha no login", account_file)
         try:
             page = await context.new_page()
             await page.goto(TENCENT_LOGIN_URL)
@@ -404,11 +404,11 @@ async def tencent_cookie_gen(
                 qrcode_path = Path(qrcode_info["image_path"])
             except Exception as exc:
                 tencent_logger.warning(
-                    _msg("⚠️", f"提取二维码图片失败({exc})，请直接在弹出的浏览器窗口中扫码，登录流程不受影响")
+                    _msg("⚠️", f"não consegui extrair a imagem do QR code({exc}), escaneie o QR code direto na janela aberta; o login segue normalmente")
                 )
                 qrcode_info = None
                 qrcode_path = None
-            tencent_logger.info(_msg("🧍", "请扫码，小人正在耐心等待登录完成"))
+            tencent_logger.info(_msg("🧍", "escaneie o QR code; estou esperando o login terminar"))
             result = await _wait_for_tencent_login(
                 page,
                 account_file,
@@ -424,7 +424,7 @@ async def tencent_cookie_gen(
                     result = _build_login_result(
                         False,
                         "cookie_invalid",
-                        "视频号扫码流程结束，但 cookie 校验失败",
+                        "Canal do WeChatescanear o QR codeo fluxo terminou, mas a validação do cookie falhou",
                         account_file,
                         qrcode_info,
                         page.url,
@@ -442,9 +442,9 @@ async def tencent_cookie_gen(
         finally:
             qrcode_utils = _get_qrcode_utils()
             if qrcode_utils["remove_qrcode_file"](qrcode_path):
-                tencent_logger.info(_msg("🧹", f"临时二维码文件已清理: {qrcode_path}"))
+                tencent_logger.info(_msg("🧹", f"arquivo temporário do QR code apagado: {qrcode_path}"))
             if not result["success"]:
-                tencent_logger.error(_msg("😢", f"登录失败: {result['message']}"))
+                tencent_logger.error(_msg("😢", f"falha no login: {result['message']}"))
             await context.close()
             await browser.close()
 
@@ -459,14 +459,14 @@ async def tencent_setup(
     account_file = _resolve_account_file(account_file)
     if not os.path.exists(account_file) or not await cookie_auth(account_file):
         if not handle:
-            result = _build_login_result(False, "cookie_invalid", "cookie文件不存在或已失效", account_file)
+            result = _build_login_result(False, "cookie_invalid", "cookiearquivo inexistente ou expirado", account_file)
             return result if return_detail else False
 
-        tencent_logger.info(_msg("🥹", "cookie 失效了，准备打开浏览器重新登录"))
+        tencent_logger.info(_msg("🥹", "cookie expirou: vou abrir o navegador para entrar de novo"))
         result = await tencent_cookie_gen(account_file, qrcode_callback=qrcode_callback, headless=headless)
         return result if return_detail else result["success"]
 
-    result = _build_login_result(True, "cookie_valid", "cookie有效", account_file)
+    result = _build_login_result(True, "cookie_valid", "cookieválido", account_file)
     return result if return_detail else True
 
 
@@ -510,11 +510,11 @@ class TencentBaseUploader(BaseVideoUploader):
 
     async def validate_base_args(self):
         if not os.path.exists(self.account_file):
-            raise RuntimeError(f"cookie文件不存在，请先完成视频号登录: {self.account_file}")
+            raise RuntimeError(f"cookiearquivo inexistente; conclua antes o ídoCanal do WeChatlogin: {self.account_file}")
         if not await cookie_auth(self.account_file):
-            raise RuntimeError(f"cookie文件已失效，请先完成视频号登录: {self.account_file}")
+            raise RuntimeError(f"cookiearquivo expirado; conclua antes o ídoCanal do WeChatlogin: {self.account_file}")
         if self.publish_strategy not in {TENCENT_PUBLISH_STRATEGY_IMMEDIATE, TENCENT_PUBLISH_STRATEGY_SCHEDULED}:
-            raise ValueError(f"不支持的发布策略: {self.publish_strategy}")
+            raise ValueError(f"estratégia de publicação não suportada: {self.publish_strategy}")
 
         if self.publish_strategy == TENCENT_PUBLISH_STRATEGY_SCHEDULED:
             self.publish_date = self.validate_publish_date(self.publish_date)
@@ -537,21 +537,21 @@ class TencentBaseUploader(BaseVideoUploader):
         )
         output_path.parent.mkdir(parents=True, exist_ok=True)
         await dialog.screenshot(path=str(output_path))
-        tencent_logger.warning(_msg("📱", f"需要管理员微信扫码完成实名验证: {output_path}"))
+        tencent_logger.warning(_msg("📱", f"um administrador precisa escanear o QR code no WeChat para concluirídoverificação de identidadeção: {output_path}"))
 
         deadline = asyncio.get_running_loop().time() + timeout_seconds
         while await dialog.count() and await dialog.is_visible():
             if asyncio.get_running_loop().time() >= deadline:
-                raise TimeoutError("等待视频号管理员实名验证超时")
+                raise TimeoutError("esperando a verificação de identidade do administrador do Canal do WeChatçãotempo esgotado")
             await asyncio.sleep(poll_interval_seconds)
 
-        tencent_logger.success(_msg("🥳", "管理员实名验证已完成，继续发表"))
+        tencent_logger.success(_msg("🥳", "verificação de identidade pelo administrador concluída, continua a publicação"))
         return output_path
 
     async def set_schedule_time_tencent(self, page: Page, publish_date: datetime):
         label_element = page.locator("label").filter(has_text="定时").nth(1)
         await label_element.click()
-        await page.click('input[placeholder="请选择发表时间"]')
+        await page.click('input[placeholder="请选择发表时间"]')  # seletor da própria página
 
         current_month = publish_date.strftime("%m月")
         page_month = await page.inner_text('span.weui-desktop-picker__panel__label:has-text("月")')
@@ -567,63 +567,63 @@ class TencentBaseUploader(BaseVideoUploader):
                 await element.click()
                 break
 
-        await page.click('input[placeholder="请选择时间"]')
+        await page.click('input[placeholder="请选择时间"]')  # seletor da própria página
         await page.keyboard.press("Control+KeyA")
         await page.keyboard.type(publish_date.strftime("%H"))
-        await page.keyboard.press("Enter")  # 确认小时并关闭时间下拉
+        await page.keyboard.press("Enter")  # confirmarhora e fecha a lista de horários
         await page.wait_for_timeout(500)
-        # 收起时间选择浮层：直接点描述区可能被 weui-desktop-dialog 遮挡，做容错
+        # fecha a camada do seletor de horário: clicar direto na descriçãoa área pode ficar coberta pelo weui-desktop-dialog; daí a tolerância
         try:
             await page.locator("div.input-editor").click(timeout=5000)
         except Exception:
             await page.keyboard.press("Escape")
 
     async def open_upload_page(self, page: Page) -> None:
-        # 视频号已改版：直接全页加载 /platform/post/create 会被跳回 /platform 首页，
-        # 发布表单 iframe 只加载空壳（Vue 不挂载），页面上没有任何 input[type=file]。
-        # 正确入口：先进首页，再点可见的「发表视频」按钮做客户端跳转，表单才会真正挂载。
+        # Canal do WeChato site mudou: abrir /platform/post/create direto joga de volta para /platform,
+        # o iframe do formulário carrega só a casca (Vue não monta), a página não tem nenhum input[type=file].
+        # caminho certo: entra na página inicial e clica no "publicar vídeo" botãoa navegação acontece no cliente; só então o formulário monta de verdade.
         await page.goto(TENCENT_HOME_URL, timeout=120000, wait_until="domcontentloaded")
-        # cookie 失效时前端 JS 会跳转到登录页, 提前发现并报明确的错误
+        # cookie quando expira, o JS do site redireciona para a página de login, descobre cedo e dá um erro claro
         try:
             await page.wait_for_url("**/login.html**", timeout=8000)
-            raise RuntimeError("视频号 cookie 已失效（被跳转到登录页），请重新扫码登录后再发布")
+            raise RuntimeError("Canal do WeChat cookie expirado (redirecionado para a página de login), entre de novo pelo QR code antes de publicar")
         except TimeoutError:
-            pass  # 8 秒内未跳转, 正常
+            pass  # 8 s sem navegar, normal
         except RuntimeError:
             raise
         except Exception:
             pass
         if any("open.weixin.qq.com/connect/qrconnect" in fr.url for fr in page.frames):
-            raise RuntimeError("视频号 cookie 已失效（被跳转到登录页），请重新扫码登录后再发布")
+            raise RuntimeError("Canal do WeChat cookie expirado (redirecionado para a página de login), entre de novo pelo QR code antes de publicar")
         try:
             await page.wait_for_load_state("networkidle", timeout=15000)
         except Exception:
             pass
         # 注意：get_by_text("发表视频") 会命中一个隐藏的说明 <p>（不可点）；
-        # 首页真正可点的入口是 button.weui-desktop-btn。
+        # na página inicial, quem é clicável de verdade é o button.weui-desktop-btn.
         publish_entry = page.locator("button.weui-desktop-btn", has_text="发表视频").first
         try:
             await publish_entry.wait_for(state="visible", timeout=30000)
             await publish_entry.click()
         except Exception:
-            # 兜底：按钮没点到时退回老逻辑直接跳转（可能仍是空壳，但保持向后兼容）
+            # reserva: botãosem acertar o clique, volta ao caminho antigo e navega direto (ainda pode ser só a casca, mas mantém a compatibilidade)
             await page.goto(TENCENT_UPLOAD_URL, timeout=120000, wait_until="domcontentloaded")
         try:
             await page.wait_for_url("**/platform/post/create", timeout=120000)
         except Exception:
             pass
 
-        # 上传表单在 micro/content/post/create 这个 iframe 里，domcontentloaded 时它还是空的。
-        # 不等网络静默就去找 input[type=file]，会误报「未找到视频号文件上传框」——
-        # 失败截图上左栏渲染正常、主内容区一片空白，看起来完全不像加载没完成。
+        # enviaro formulário fica no iframe micro/content/post/create, ainda vazio no domcontentloaded.
+        # procura o input sem esperar a rede sossegar[type=file], dá alarme falso "não achei o campo de envio de arquivo do Canal do WeChat"——
+        # no print de erro a coluna da esquerda aparece certa e o conteúdo principal em branco: não parece falta de carregamentoído.
         try:
             await page.wait_for_load_state("networkidle", timeout=30000)
         except Exception:
-            pass  # 静默不了就算了，下面还有重试兜底
+            pass  # se não der para silenciar, tudo bem: há uma nova tentativa adiante
 
     async def upload_video_file(self, page: Page, file_path: str) -> None:
         async def find_file_input():
-            for fr in page.frames:  # 主 frame + 所有 iframe（视频号编辑器可能在 iframe 内）
+            for fr in page.frames:  # frame principal + todos os iframes (Canal do WeChato editor pode estar dentro de um iframe)
                 try:
                     fi = fr.locator('input[type="file"]')
                     if await fi.count():
@@ -638,8 +638,8 @@ class TencentBaseUploader(BaseVideoUploader):
             if fi is not None:
                 break
             if not clicked_publish:
-                # 新版视频号助手可能先落在首页，且「发表视频」按钮异步出现。
-                # 持续轮询所有可访问 button；Patchright 在当前页面上按名称精确匹配不稳定。
+                # a versão nova do assistente do Canal do WeChat pode cair na página inicial, e "publicar vídeo" botãoaparece de forma assíncrona.
+                # verifica todos os botões acessíveis; no Patchright, casar pelo nome exato nesta página é instável.
                 try:
                     publish_buttons = await page.get_by_role("button").all()
                 except Exception:
@@ -650,7 +650,7 @@ class TencentBaseUploader(BaseVideoUploader):
                         is_visible = await candidate.is_visible()
                     except Exception:
                         continue
-                    if "发表视频" in button_text and is_visible:
+                    if "publicar vídeo" in button_text and is_visible:
                         await candidate.click(force=True)
                         clicked_publish = True
                         break
@@ -658,26 +658,26 @@ class TencentBaseUploader(BaseVideoUploader):
             if fi is None:
                 await asyncio.sleep(1)
         if fi is None:
-            # 留现场：这个错误的可能原因太多（没登录 / 落到首页 / iframe 没加载完 /
-            # 平台改版），只看错误字符串没法区分，截图能一眼看出是哪种。
+            # guarda evidências: esse erro tem causas demais (sem sessão, na página inicial ou com o iframe incompleto /
+            # o site mudou), só pelo texto do erro não dá para distinguir; o print mostra na hora qual é.
             try:
                 shot = Path(BASE_DIR) / "debug_tencent_no_file_input.png"
                 await page.screenshot(path=str(shot), full_page=True)
                 tencent_logger.info(_msg(
                     "📸",
-                    f"失败现场已截图 {shot}; url={page.url}; "
+                    f"print do erro guardado {shot}; url={page.url}; "
                     f"frames={[fr.url[:80] for fr in page.frames]}",
                 ))
             except Exception:
                 pass
-            raise RuntimeError("未找到视频号文件上传框")
+            raise RuntimeError("não achei o campo de envio de arquivo do Canal do WeChat")
         await fi.set_input_files(file_path)
 
     async def set_short_title(self, page: Page, title: str, short_title: str | None = None) -> None:
-        # 视频号「短标题」即界面上要求填写的“标题”（那个大编辑区其实是“视频描述”）。
-        # 走 format_str_for_short_title 保证长度落在 7~15，避免发布时被校验拦下。
+        # Canal do WeChat "título curto" é o "título" que a tela pede (aquela área grande de edição é na verdade o "descrição do vídeo").
+        # passa pelo format_str_for_short_title para o tamanho ficar em 7~15, evita ser barrado na validação da publicação.
         value = format_str_for_short_title(short_title or title)
-        # 优先用 placeholder 定位（已 dump 验证更稳），兜底旧的“短标题”相邻 input。
+        # localiza primeiro pelo placeholder (verificação salva em arquivoçãomais estável), reserva: o input vizinho do antigo "título curto".
         field = page.locator('input[placeholder="填写短标题有机会获得更多流量"]').first
         if not await field.count():
             field = (
@@ -688,13 +688,13 @@ class TencentBaseUploader(BaseVideoUploader):
             )
         if await field.count():
             await field.fill(value)
-            tencent_logger.info(_msg("🏷️", f"短标题已填写（{len(value)}字）：{value}"))
+            tencent_logger.info(_msg("🏷️", f"título curto preenchido ({len(value)} caracteres): {value}"))
         else:
-            tencent_logger.info(_msg("🧾", "未找到短标题输入框，跳过短标题"))
+            tencent_logger.info(_msg("🧾", "não achei o campo de título curto; pulando"))
 
     async def _dismiss_switch_account_dialog(self, page: Page) -> None:
-        # 视频号上传后偶发弹出「切换视频号」对话框(.changeAccount-dialog / .common-dialog)遮挡发布表单。
-        # 它带「取消」按钮、非强制，点「取消」/ 右上角 × / Esc 跳过即可，用当前账号继续发布。
+        # Canal do WeChatenviaràs vezes aparece depois "troca o Canal do WeChat" janela(.changeAccount-dialog / .common-dialog)cobre o formulário de publicação.
+        # ele traz "cancelar" botão, não é obrigatório; clica "cancelar"/ canto superior direito × / Esc pode pular: segue a publicação com a conta atualção.
         cancel = page.locator('.changeAccount-dialog button:has-text("取消")').first
         closeb = page.locator('.changeAccount-dialog .weui-desktop-dialog__close-btn').first
         for cand in (cancel, closeb):
@@ -712,7 +712,7 @@ class TencentBaseUploader(BaseVideoUploader):
             pass
 
     async def fill_title_and_tags(self, page: Page) -> None:
-        # 上传后偶发「切换视频号」弹窗遮挡描述框，点不动就关弹窗重试（以能点中描述框为成功标志）。
+        # enviarde vez em quando, depois "troca o Canal do WeChat" a janela cobre a descriçãocampo: se o clique não pegar, fecha a janela e tenta de novo (para conseguir clicar na descriçãoesse campo indica sucesso).
         for _ in range(4):
             try:
                 await page.locator("div.input-editor").click(timeout=5000)
@@ -727,25 +727,25 @@ class TencentBaseUploader(BaseVideoUploader):
         for tag in self.tags:
             await page.keyboard.type("#" + tag)
             await page.keyboard.press("Space")
-        tencent_logger.info(_msg("🏷️", f"成功添加 hashtag: {len(self.tags)}"))
+        tencent_logger.info(_msg("🏷️", f"hashtag adicionada: {len(self.tags)}"))
 
     async def fill_description(self, page: Page) -> None:
         await page.keyboard.press("Enter")
         await page.keyboard.type(self.desc)
-        tencent_logger.info(_msg("🏷️", f"成功添加 desc: {len(self.desc)}"))
+        tencent_logger.info(_msg("🏷️", f"descrição adicionada: {len(self.desc)}"))
 
     async def apply_collection(self, page: Page) -> None:
-        """在发布表单页"添加到合集"下拉框按合集名精确选中（页面结构：option-item > .item > .name/.desc）。
+        """na página do formulário" adiciona à coletânea " seleciona na lista pelo nome exato da coletânea (estrutura da página: option-item > .item > .name/.desc).
 
-        找不到匹配名字的合集时不展开/不选（保持未选状态直接发布，界面允许留空，
-        不阻断主发布流程）。旧实现是"下拉项数>1就选第一项"，等价于随机选，已改为精确匹配。
+        sem coletânea com esse nome, não abre nem seleciona (publica sem selecionar nada; a interface aceita vazio,
+        não trava o fluxo principal).a versão antiga era "itens da lista>1escolhe o primeiro", equivalia a escolher no acaso; agora casa exatamente.
         """
         if not self.collection_name:
             return
         try:
             trigger = page.get_by_text("添加到合集").first
             if await trigger.count() == 0:
-                tencent_logger.info(_msg("🧾", "当前页面未发现「添加到合集」入口，跳过归集"))
+                tencent_logger.info(_msg("🧾", "não achei nesta página a entrada de adicionar à coletânea: seguindo sem agrupar"))
                 return
             dropdown = trigger.locator("xpath=following-sibling::div").first
             await dropdown.click(timeout=8000)
@@ -756,16 +756,16 @@ class TencentBaseUploader(BaseVideoUploader):
             )
             if await option.count() == 0:
                 tencent_logger.warning(
-                    _msg("😵", f"合集下拉框未找到「{self.collection_name}」，跳过归集，保持未选状态")
+                    _msg("😵", f"a lista de coletâneas não tem '{self.collection_name}': segue sem selecionar nenhuma")
                 )
                 await page.keyboard.press("Escape")
                 await page.wait_for_timeout(300)
                 return
 
-            # headless 下 option 常报 "element is not visible"：下拉列表开在视口外/
-            # 在 .option-list-wrap 滚动容器内，headful（大窗口）时在视野里能直接点中，
-            # headless 默认视口小就点不中。先把目标 option 滚进视野再点；普通 click
-            # 仍被判不可见时 → force 点击（跳过可见性 actionability）→ 派发原生 click 兜底。
+            # headless a opção costuma dar "element is not visible": a lista abre fora da área visível /
+            # dentro do container rolável .option-list-wrap, com janela (janela grande)fica visível e dá para clicar direto,
+            # headless com a janela pequena o clique erra; rola a opção até a vista antes de clicar — o clique comum
+            # quando ainda é considerado invisível → force clica (pula a checagem de visibilidade)→ dispara um clique nativo como reserva.
             target = option.first
             try:
                 await target.scroll_into_view_if_needed(timeout=3000)
@@ -779,23 +779,24 @@ class TencentBaseUploader(BaseVideoUploader):
                 except Exception:
                     await target.dispatch_event("click")
             await page.wait_for_timeout(500)
-            tencent_logger.success(_msg("🥳", f"已选择合集：{self.collection_name}"))
+            tencent_logger.success(_msg("🥳", f"coletânea escolhida: {self.collection_name}"))
         except Exception as exc:
-            tencent_logger.warning(_msg("😵", f"选择合集失败，跳过归集继续发布: {exc}"))
+            tencent_logger.warning(_msg("😵", f"não consegui escolher a coletânea; sigo a publicação sem ela: {exc}"))
             try:
                 await page.keyboard.press("Escape")
             except Exception:
                 pass
 
     async def apply_original_statement(self, page: Page) -> None:
-        # 视频号「视频标注」下拉：本项目成片经 AI 处理（TTS 配音、AI 字幕、AI 前贴片），
-        # 依平台合规要求如实选「含AI生成内容」（与「内容为转载」等并列，选定即可、无需填写来源）。
-        # 注意：这与上方独立的「声明原创」复选框是两个不同字段，本项目走 AI 标注、不勾原创声明。
+        # Canal do WeChat "marcação do vídeo" lista: neste projeto o vídeo passa por IA (TTS narração, legenda e vinheta feitas por IA), 
+        # escolha conforme as regras da plataforma: "contém conteúdo gerado por IA" (ao lado de "conteúdo republicado" e outras; basta escolher, sem informar a fonte).
+        # atenção: isto é diferente do de cima "declarar conteúdo original" são dois campos diferentes; aqui usamos a marcação de IA e não marcamos conteúdo original.
+        # o texto abaixo é o rótulo da própria página: não traduzir
         label_text = getattr(self, "content_label", None) or "含AI生成内容"
         try:
             entry = page.get_by_text("选择视频标注", exact=True).first
             if not await entry.count():
-                tencent_logger.info(_msg("🧾", "当前页面未发现「视频标注」入口，跳过标注继续发布"))
+                tencent_logger.info(_msg("🧾", "não achei nesta página a entrada de marcação do vídeo: pulando a marcação e continuando a publicação"))
                 return
             await entry.click()
             await page.wait_for_timeout(800)
@@ -803,25 +804,25 @@ class TencentBaseUploader(BaseVideoUploader):
             await option.wait_for(state="visible", timeout=5000)
             await option.click()
             await page.wait_for_timeout(500)
-            tencent_logger.success(_msg("🏷️", f"视频标注已选择：{label_text}"))
+            tencent_logger.success(_msg("🏷️", f"marcação do vídeo escolhida: {label_text}"))
         except Exception as exc:
-            tencent_logger.warning(_msg("😵", f"设置视频标注「{label_text}」失败，跳过继续发布：{exc}"))
+            tencent_logger.warning(_msg("😵", f"não consegui definir a marcação do vídeo '{label_text}'; pulando e continuando a publicação: {exc}"))
 
     async def wait_for_upload_complete(
         self, page: Page, timeout_seconds: int = 3600, max_retries: int = 3
     ) -> None:
-        """等上传完成。
+        """espera o envio terminarído.
 
-        **必须有个头，而且重试必须有上限。** 原来是没有出口的 while True：上传出错就
-        删掉重传，失败再删再传，永远循环；中间每 2 秒打一行「正在上传视频中...」——
-        这条日志和真的在传一模一样，从外面完全分不出。
+        **precisa terminar, e o número de tentativas precisa ter limite.** antes era um while True sem saída: qualquer erro no envio
+        apagava e reenviava sem parar, escrevendo uma linha a cada 2 s " enviando o vídeo..."——
+        esse log é idêntico ao de um envio real: de fora não dá para diferenciar.
 
-        实测（2026-08-11，172MB / 上行 ~0.5Mbps）：每次传到 4 分钟左右报错，然后重来，
-        整整循环了近 2 小时也不会停，进程也不会退。用户看到的只有「正在上传视频中」，
-        真相是同一段视频被反复上传了 20 多次。
+        medido na prática (2026-08-11, 172MB / upload ~0.5Mbps): dava erro por volta dos 4 minutos e recomeçava,
+        ficava quase 2 horas em laço sem parar nem encerrar o processo; o usuário só via "enviando o vídeo",
+        na verdade é o mesmo vídeofoi reenviado mais de 20 vezes.
 
-        默认 1 小时 / 3 次重试：慢网络上大文件确实会传很久，上限要给够；
-        但到点、或者重试用完，就带现场截图明确报错，不要静默地转下去。
+        por padrão 1 hora e 3 tentativas: em rede lenta um arquivo grande demora mesmo, e o limite precisa caber;
+        mas no limite de tempo ou de tentativas, erra de forma clara com print, em vez de seguir em silêncio.
         """
         deadline = time.monotonic() + timeout_seconds
         last_report = 0.0
@@ -831,11 +832,11 @@ class TencentBaseUploader(BaseVideoUploader):
                 try:
                     shot = Path(BASE_DIR) / "debug_tencent_upload_timeout.png"
                     await page.screenshot(path=str(shot), full_page=True)
-                    tencent_logger.error(_msg("📸", f"上传超时现场已截图 {shot}"))
+                    tencent_logger.error(_msg("📸", f"tempo esgotado no envioprint guardado {shot}"))
                 except Exception:
                     pass
                 raise RuntimeError(
-                    f"视频号上传超过 {timeout_seconds} 秒仍未完成（「发表」按钮一直不可用）"
+                    f"o envio ao Canal do WeChat passou de {timeout_seconds} s e não terminou (o botão de publicar continua indisponível)"
                 )
             try:
                 publish_button = page.locator('div.form-btns button:has-text("发表"):visible').first
@@ -845,15 +846,15 @@ class TencentBaseUploader(BaseVideoUploader):
                         not await publish_button.is_disabled()
                         and (not button_class or "weui-desktop-btn_disabled" not in button_class)
                     ):
-                        tencent_logger.info(_msg("🥳", "视频上传完毕"))
+                        tencent_logger.info(_msg("🥳", "envio do vídeo concluído"))
                         break
 
-                # 每 2 秒刷一行同样的话没有信息量，只是把日志冲爆（实测 50 分钟刷了 1600 行）。
-                # 30 秒一行，并且带上已等多久——「还要多久」是这里唯一有用的信息。
+                # repetir a mesma linha a cada 2 s não informa nada e só entope o log (no teste, 1600 linhas em 50 minutos).
+                # 30 uma linha por segundo, dizendo há quanto tempo espera —"quanto falta" é a única informação útil aqui.
                 now = time.monotonic()
                 if now - last_report >= 30:
                     waited = int(timeout_seconds - (deadline - now))
-                    tencent_logger.info(_msg("🏃", f"正在上传视频中...（已等 {waited} 秒）"))
+                    tencent_logger.info(_msg("🏃", f"enviando o vídeo... (esperando há {waited} s)"))
                     last_report = now
                 await asyncio.sleep(2)
 
@@ -865,14 +866,14 @@ class TencentBaseUploader(BaseVideoUploader):
                         try:
                             shot = Path(BASE_DIR) / "debug_tencent_upload_failed.png"
                             await page.screenshot(path=str(shot), full_page=True)
-                            tencent_logger.error(_msg("📸", f"上传反复失败，现场已截图 {shot}"))
+                            tencent_logger.error(_msg("📸", f"enviarfalhou várias vezes; print guardado {shot}"))
                         except Exception:
                             pass
                         raise RuntimeError(
-                            f"视频号上传连续失败 {max_retries} 次，已停止重试"
-                            "（常见原因：文件过大、上行带宽太慢导致平台侧超时，或走了代理/VPN）"
+                            f"Canal do WeChatenviarfalhas seguidas {max_retries} ª tentativa; parando por aqui"
+                            " (causas comuns: arquivo grande demais, upload lento que estoura o tempo do site, ou proxy/VPN no caminho)"
                         )
-                    tencent_logger.error(_msg("😵", f"发现上传出错了，准备重试（第 {retries}/{max_retries} 次）"))
+                    tencent_logger.error(_msg("😵", f"o envio deu erro; tentando de novo ({retries}/{max_retries})"))
                     await self.handle_upload_error(page)
             except RuntimeError:
                 raise
@@ -881,7 +882,7 @@ class TencentBaseUploader(BaseVideoUploader):
 
     async def submit_publish(self, page: Page) -> None:
         is_draft = getattr(self, "is_draft", False)
-        # 先等待并清理遮罩/弹窗,再等发表按钮出现
+        # espera e limpa camadas e janelas antes,espera o botão de publicarapareceu
         for wait_round in range(60):
             await self._dismiss_switch_account_dialog(page)
             try:
@@ -896,8 +897,8 @@ class TencentBaseUploader(BaseVideoUploader):
                 pass
             await asyncio.sleep(1)
         else:
-            tencent_logger.warning(_msg("😵", "60s 内未找到可见的发表/草稿按钮，尝试强制继续"))
-        # 点发表/草稿
+            tencent_logger.warning(_msg("😵", "60s não achei o botão visível de publicar ou salvar rascunhoão, tenta continuar à força"))
+        # clica em publicar ou rascunho
         for attempt in range(20):
             try:
                 if await publish_btn.count():
@@ -907,34 +908,34 @@ class TencentBaseUploader(BaseVideoUploader):
                         await publish_btn.evaluate("el => el.click()")
                 if is_draft:
                     await page.wait_for_url("**/post/list**", timeout=5000)
-                    tencent_logger.success(_msg("🥳", "视频草稿保存成功"))
+                    tencent_logger.success(_msg("🥳", "rascunho do vídeo salvo"))
                 else:
-                    # 发表成功后视频号可能跳 /platform（首页）、/post/list 或留在 create 页但按钮消失。
-                    # 综合判断：URL 离开 /post/create 或 发表按钮不再存在。
+                    # publicado, o Canal do WeChat pode ir para /platform (página inicial), /post/list ou fica na página create, mas o botãosumiu.
+                    # decisão combinada: a URL sai de /post/create ou o botão de publicarnão existe mais.
                     for _ in range(10):
                         await asyncio.sleep(1)
                         cur = page.url
                         if "/post/create" not in cur:
-                            tencent_logger.success(_msg("🥳", "视频发布成功"))
+                            tencent_logger.success(_msg("🥳", "vídeo publicado"))
                             return
                         if not await publish_btn.count():
-                            tencent_logger.success(_msg("🥳", "视频发布成功（按钮已消失）"))
+                            tencent_logger.success(_msg("🥳", "vídeo publicado (botãosumiu)"))
                             return
-                    raise Exception("发表后 10s 页面未变化")
+                    raise Exception("10 s depois de publicar e a página não mudou")
                 return
             except Exception as exc:
                 current_url = page.url
                 if is_draft and ("post/list" in current_url or "draft" in current_url):
-                    tencent_logger.success(_msg("🥳", "视频草稿保存成功"))
+                    tencent_logger.success(_msg("🥳", "rascunho do vídeo salvo"))
                     return
                 if (not is_draft) and "/post/create" not in current_url:
-                    tencent_logger.success(_msg("🥳", "视频发布成功"))
+                    tencent_logger.success(_msg("🥳", "vídeo publicado"))
                     return
                 if attempt and attempt % 5 == 0:
-                    tencent_logger.warning(_msg("😵", f"发布仍未完成(第{attempt}次)，异常: {str(exc)[:60]}"))
-                tencent_logger.info(_msg("🏃", "视频正在发布中..."))
+                    tencent_logger.warning(_msg("😵", f"a publicação ainda não terminou (tentativa {attempt}); erro: {str(exc)[:60]}"))
+                tencent_logger.info(_msg("🏃", "publicando o vídeo..."))
                 await asyncio.sleep(1)
-        raise RuntimeError("发布未在预期时间内完成，请检查发布页面")
+        raise RuntimeError("a publicação não terminou no tempo esperadoído, confira a página de publicação")
 
 
 class TencentVideo(TencentBaseUploader):
@@ -979,7 +980,7 @@ class TencentVideo(TencentBaseUploader):
     async def validate_upload_args(self):
         await self.validate_base_args()
         if not self.title or not str(self.title).strip():
-            raise ValueError("视频模式下，title 是必须的")
+            raise ValueError("no modo vídeo, o título é obrigatório")
         self.file_path = str(self.validate_video_file(self.file_path))
         if self.thumbnail_landscape_path:
             self.thumbnail_landscape_path = str(self.validate_image_file(self.thumbnail_landscape_path))
@@ -987,7 +988,7 @@ class TencentVideo(TencentBaseUploader):
             self.thumbnail_portrait_path = str(self.validate_image_file(self.thumbnail_portrait_path))
 
     async def handle_upload_error(self, page: Page) -> None:
-        tencent_logger.info(_msg("😵", "视频出错了，重新上传中"))
+        tencent_logger.info(_msg("😵", "vídeodeu erro; enviando de novo"))
         await page.locator('div.media-status-content div.tag-inner:has-text("删除")').click()
         await page.get_by_role("button", name="删除", exact=True).click()
         await self.upload_video_file(page, self.file_path)
@@ -1026,7 +1027,7 @@ class TencentVideo(TencentBaseUploader):
                 await crop_confirm_button.click()
                 await page.wait_for_timeout(1000)
         except Exception as exc:
-            tencent_logger.warning(_msg("😵", f"封面裁剪确认时出错，小人继续尝试保存主弹窗: {exc}"))
+            tencent_logger.warning(_msg("😵", f"erro ao confirmar o corte da capa; tentando salvar pela janela principal: {exc}"))
 
     async def upload_thumbnail_in_dialog(self, page: Page, cover_dialog, thumbnail_path: str) -> None:
         await cover_dialog.wait_for(state="visible", timeout=5000)
@@ -1051,20 +1052,20 @@ class TencentVideo(TencentBaseUploader):
     ) -> None:
         cover_dialog = await self.open_thumbnail_dialog(page, selectors, dialog_titles)
         if not cover_dialog:
-            tencent_logger.info(_msg("🧍", f"当前页面没有出现{label}封面编辑弹窗，小人先跳过"))
+            tencent_logger.info(_msg("🧍", f"não apareceu nesta página{label}janela de edição da capa: pulando"))
             return
 
         try:
             await self.upload_thumbnail_in_dialog(page, cover_dialog, thumbnail_path)
-            tencent_logger.success(_msg("🥳", f"{label}封面已经设置完成"))
+            tencent_logger.success(_msg("🥳", f"{label}capa definida"))
         except Exception as exc:
-            tencent_logger.warning(_msg("😵", f"{label}封面设置失败，这次先跳过: {exc}"))
+            tencent_logger.warning(_msg("😵", f"{label}não consegui definir a capa; pulando desta vez: {exc}"))
 
     async def set_thumbnail(self, page: Page) -> None:
         if not self.thumbnail_landscape_path and not self.thumbnail_portrait_path:
             return
 
-        tencent_logger.info(_msg("🖼️", "小人准备设置封面"))
+        tencent_logger.info(_msg("🖼️", "definindo a capa"))
 
         landscape_selectors = [
             'div.horizontal-cover-wrap:has-text("4:3")',
@@ -1083,30 +1084,30 @@ class TencentVideo(TencentBaseUploader):
                 page,
                 self.thumbnail_landscape_path,
                 landscape_selectors,
-                ["编辑视频号动态封面", "编辑动态封面", "编辑封面"],
-                "4:3 横版",
+                ["编辑视频号动态封面", "编辑动态封面", "编辑封面"],  # títulos das janelas na própria página
+                "4:3 horizontal",
             )
         if self.thumbnail_portrait_path:
             await self.set_single_thumbnail(
                 page,
                 self.thumbnail_portrait_path,
                 portrait_selectors,
-                ["编辑个人主页卡片", "编辑封面"],
-                "3:4 竖版",
+                ["编辑个人主页卡片", "编辑封面"],  # títulos das janelas na própria página
+                "3:4 vertical",
             )
 
     async def prepare_video_for_publish(self, page: Page) -> None:
         await self.wait_for_realtime_verification(page)
         await self.fill_title_and_tags(page)
         await self.fill_description(page)
-        # 合集不在这里选：此时视频还在上传，上传完成后表单会刷新，
-        # 上传中选的合集会被重置/不绑定（"日志说选了、后台没加"的根因）。
-        # 改到 wait_for_upload_complete 之后再选，见 upload()。
+        # a coletânea não é escolhida aqui: neste ponto o vídeo ainda enviando; envio concluídodepois o formulário recarrega,
+        # enviandoa coletânea escolhida é perdida ou não fica vinculada ("o log dizia que escolheu, mas o site não aplicou" causa raiz).
+        # passou a ser escolhido depois do wait_for_upload_complete; veja upload().
 
     async def upload(self, playwright: Playwright) -> None:
-        tencent_logger.info(_msg("🧍", "小人先检查 cookie、视频文件和发布时间"))
+        tencent_logger.info(_msg("🧍", "conferindo o cookie e o arquivo do vídeo e horário de publicação"))
         await self.validate_upload_args()
-        tencent_logger.info(_msg("🥳", "上传前检查通过"))
+        tencent_logger.info(_msg("🥳", "verificação antes do envio concluída"))
 
         browser = await playwright.chromium.launch(**_build_launch_kwargs(headless=self.headless))
         context = await browser.new_context(storage_state=self.account_file)
@@ -1114,12 +1115,12 @@ class TencentVideo(TencentBaseUploader):
         try:
             page = await context.new_page()
             await self.open_upload_page(page)
-            tencent_logger.info(_msg("🏃", f"小人开始搬运视频: {self.title}"))
+            tencent_logger.info(_msg("🏃", f"enviando o vídeo: {self.title}"))
 
             await self.upload_video_file(page, self.file_path)
             await self.prepare_video_for_publish(page)
             await self.wait_for_upload_complete(page)
-            # 上传完成、表单稳定后再选合集（否则上传中选的会被重置）
+            # envio concluído, escolhe a coletânea depois que o formulário estabiliza (senão o que foi escolhido durante o envio é perdido)
             await self.apply_collection(page)
             await self.apply_original_statement(page)
             await self.set_thumbnail(page)
@@ -1131,7 +1132,7 @@ class TencentVideo(TencentBaseUploader):
             await self.submit_publish(page)
 
             await context.storage_state(path=self.account_file)
-            tencent_logger.success(_msg("🥳", "cookie 更新完毕"))
+            tencent_logger.success(_msg("🥳", "cookie atualização concluída"))
         finally:
             await context.close()
             await browser.close()
@@ -1174,9 +1175,9 @@ class TencentNote(TencentBaseUploader):
     async def validate_upload_args(self):
         await self.validate_base_args()
         if not self.title or not str(self.title).strip():
-            raise ValueError("图文模式下，title 是必须的")
+            raise ValueError("no modo imagem e texto, o título é obrigatório")
         if not self.image_paths:
-            raise ValueError("图文模式下，图片是必须的")
+            raise ValueError("no modo imagem e texto, as imagens são obrigatórias")
 
         if isinstance(self.image_paths, (str, Path)):
             self.image_paths = [self.image_paths]
@@ -1187,13 +1188,13 @@ class TencentNote(TencentBaseUploader):
         self.image_paths = normalized_image_paths
 
     async def switch_to_note_mode(self, page: Page) -> None:
-        raise NotImplementedError("请在 TencentNote.switch_to_note_mode 中补充视频号切换到图文发布模式的逻辑")
+        raise NotImplementedError("implemente em TencentNote.switch_to_note_mode a troca para o modo de imagem e texto do Canal do WeChat")
 
     async def upload_note_images(self, page: Page) -> None:
-        raise NotImplementedError("请在 TencentNote.upload_note_images 中补充视频号图文图片上传逻辑")
+        raise NotImplementedError("implemente em TencentNote.upload_note_images o envio das imagens do post do Canal do WeChat")
 
     async def fill_note_title_and_tags(self, page: Page) -> None:
-        raise NotImplementedError("请在 TencentNote.fill_note_title_and_tags 中补充视频号图文标题/话题填写逻辑")
+        raise NotImplementedError("implemente em TencentNote.fill_note_title_and_tags o preenchimento de título e hashtags do post do Canal do WeChat")
 
     async def fill_note_body(self, page: Page) -> None:
         return None
@@ -1210,9 +1211,9 @@ class TencentNote(TencentBaseUploader):
         await self.prepare_note_for_publish(page)
 
     async def upload(self, playwright: Playwright) -> None:
-        tencent_logger.info(_msg("🧍", "小人先检查 cookie、图文图片和发布时间"))
+        tencent_logger.info(_msg("🧍", "conferindo cookie, imagens e horário de publicação"))
         await self.validate_upload_args()
-        tencent_logger.info(_msg("🥳", "图文上传前检查通过"))
+        tencent_logger.info(_msg("🥳", "verificação antes do envio do post concluída"))
 
         browser = await playwright.chromium.launch(**_build_launch_kwargs(headless=self.headless))
         context = await browser.new_context(storage_state=self.account_file)
@@ -1221,7 +1222,7 @@ class TencentNote(TencentBaseUploader):
         try:
             page = await context.new_page()
             await self.open_upload_page(page)
-            tencent_logger.info(_msg("🏃", f"小人开始搬运图文，共 {len(self.image_paths)} 张图片"))
+            tencent_logger.info(_msg("🏃", f"enviando o post de imagem e texto, com {len(self.image_paths)}  imagens"))
 
             await self.upload_note_content(page)
 
@@ -1231,7 +1232,7 @@ class TencentNote(TencentBaseUploader):
             await self.submit_publish(page)
 
             await context.storage_state(path=self.account_file)
-            tencent_logger.success(_msg("🥳", "cookie 更新完毕"))
+            tencent_logger.success(_msg("🥳", "cookie atualização concluída"))
         finally:
             await context.close()
             await browser.close()

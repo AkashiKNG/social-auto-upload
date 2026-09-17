@@ -1,3 +1,4 @@
+# Os seletores em chinês reproduzem o HTML real do Xiaohongshu: traduzir quebraria o teste.
 import asyncio
 import os
 import tempfile
@@ -220,12 +221,12 @@ class XiaohongshuUploaderTests(unittest.TestCase):
 
     def test_video_fill_meta_uses_desc_then_first_tag(self):
         app = xhs_main.XiaoHongShuVideo(
-            title="标题内容",
+            title="Conteúdo do título",
             file_path="demo.mp4",
-            tags=["话题1"],
+            tags=["hashtag1"],
             publish_date=0,
             account_file="account.json",
-            desc="描述内容",
+            desc="Conteúdo da descrição",
         )
         page = RecordingPage()
 
@@ -233,14 +234,14 @@ class XiaohongshuUploaderTests(unittest.TestCase):
 
         self.assertEqual(
             page.locators['input[placeholder*="填写标题"]'].actions,
-            [("fill", "标题内容")],
+            [("fill", "Conteúdo do título")],
         )
         self.assertEqual(
             page.locators['p[data-placeholder*="输入正文描述"]'].actions,
             [("click",)],
         )
-        self.assertIn(("type", "描述内容", None), page.keyboard.actions)
-        self.assertIn(("type", "#话题1", 30), page.keyboard.actions)
+        self.assertIn(("type", "Conteúdo da descrição", None), page.keyboard.actions)
+        self.assertIn(("type", "#hashtag1", 30), page.keyboard.actions)
         self.assertEqual(
             page.locators['#creator-editor-topic-container .item'].actions,
             [("wait_for", {"state": "visible", "timeout": 2000}), ("click",)],
@@ -248,9 +249,9 @@ class XiaohongshuUploaderTests(unittest.TestCase):
 
     def test_video_fill_meta_can_fill_first_tag_without_desc(self):
         app = xhs_main.XiaoHongShuVideo(
-            title="标题内容",
+            title="Conteúdo do título",
             file_path="demo.mp4",
-            tags=["话题1"],
+            tags=["hashtag1"],
             publish_date=0,
             account_file="account.json",
         )
@@ -263,21 +264,21 @@ class XiaohongshuUploaderTests(unittest.TestCase):
             [("click",)],
         )
         self.assertNotIn(("type", "", None), page.keyboard.actions)
-        self.assertIn(("type", "#话题1", 30), page.keyboard.actions)
+        self.assertIn(("type", "#hashtag1", 30), page.keyboard.actions)
 
     def test_note_title_defaults_do_not_override_explicit_title(self):
         app = xhs_main.XiaoHongShuNote(
             image_paths=["a.png"],
-            note="正文",
+            note="Texto",
             tags=[],
             publish_date=0,
             account_file="account.json",
-            title="显式标题",
-            desc="图文正文",
+            title="Título explícito",
+            desc="Texto do post",
         )
 
-        self.assertEqual(app.title, "显式标题")
-        self.assertEqual(app.desc, "图文正文")
+        self.assertEqual(app.title, "Título explícito")
+        self.assertEqual(app.desc, "Texto do post")
 
 
 if __name__ == "__main__":

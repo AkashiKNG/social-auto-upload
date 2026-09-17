@@ -1,28 +1,28 @@
 import { http } from '@/utils/request'
 
-// 账号管理相关API
+// API de contas
 export const accountApi = {
-  // 获取有效账号列表（带验证）
+  // lista as contas válidas (com verificação)
   getValidAccounts() {
     return http.get('/getValidAccounts')
   },
 
-  // 获取账号列表（不带验证，快速加载）
+  // lista as contas (sem verificação, carrega rápido)
   getAccounts() {
     return http.get('/getAccounts')
   },
 
-  // 添加账号
+  // adiciona uma conta
   addAccount(data) {
     return http.post('/account', data)
   },
 
-  // 更新账号
+  // atualiza uma conta
   updateAccount(data) {
     return http.post('/updateUserinfo', data)
   },
 
-  // 删除账号
+  // remove uma conta
   deleteAccount(id) {
     return http.get(`/deleteAccount?id=${id}`)
   }

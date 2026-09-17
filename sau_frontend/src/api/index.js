@@ -1,9 +1,9 @@
-// API 统一导出
+// API exportação central
 export * from './user'
 export * from './account'
 export * from './material'
 
-// 可以在这里添加其他API模块的导出
+// dá para exportar outros módulos de API aqui
 // export * from './product'
 // export * from './order'
 // export * from './common'

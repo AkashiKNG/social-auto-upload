@@ -1,70 +1,70 @@
 ---
 name: kuaishou-upload
-description: 当 agent 需要通过已安装的 `sau` CLI 完成快手登录、cookie 校验、视频上传或图文发布时使用这个 skill。该 skill 适用于已经安装 `social-auto-upload` 且可调用 `sau` 命令的环境。优先使用这个 skill 进行稳定的命令式快手工作流，而不是一开始就阅读 uploader 源码。
+description: Use esta skill quando o agente precisar entrar na conta do Kuaishou, validar o cookie, enviar um vídeo ou publicar um post de imagens usando a CLI `sau` já instalada. Ela serve em ambientes onde o `social-auto-upload` está instalado e o comando `sau` está disponível. Prefira esta skill para um fluxo estável por comando no Kuaishou, em vez de começar lendo o código do uploader.
 ---
 
-# 快手上传 Skill
+# Skill de envio para o Kuaishou
 
-优先把 `sau` 作为主接口。
+Trate o `sau` como a interface principal.
 
-不要假设当前环境一定能读取仓库源码。
-不要一开始就去读 `uploader/`。
-只有在命令不可用或 CLI 执行失败时，才回退到故障排查说明。
+Não suponha que o ambiente consegue ler o código do repositório.
+Não comece lendo o `uploader/`.
+Só recorra ao guia de problemas quando o comando não existir ou a CLI falhar.
 
-## 功能概览
+## Visão geral
 
-| 功能 | 命令入口 | 说明 |
+| Função | Comando | Descrição |
 | --- | --- | --- |
-| 快手登录 | `sau kuaishou login --account <name>` | 生成或刷新指定账号的 cookie |
-| cookie 校验 | `sau kuaishou check --account <name>` | 检查指定账号 cookie 是否有效 |
-| 视频上传 | `sau kuaishou upload-video ...` | 上传并发布快手视频 |
-| 图文上传 | `sau kuaishou upload-note ...` | 上传并发布快手图文 |
+| Entrar na conta do Kuaishou | `sau kuaishou login --account <name>` | gera ou renova o cookie da conta |
+| Validar o cookie | `sau kuaishou check --account <name>` | confere se o cookie da conta ainda vale |
+| Enviar vídeo | `sau kuaishou upload-video ...` | envia e publica um vídeo no Kuaishou |
+| Enviar post de imagens | `sau kuaishou upload-note ...` | envia e publica um post de imagens no Kuaishou |
 
-元数据约定：
+Convenção de metadados:
 
-- 视频使用 `title + desc + tags`
-- 图文使用 `title + note + tags`
+- vídeo usa `title + desc + tags`
+- post de imagens usa `title + note + tags`
 
-## 默认工作流
+## Fluxo padrão
 
-1. 先确认 `references/runtime-requirements.md` 里的运行前提。
-2. 再确认 `references/cli-contract.md` 里的命令契约。
-3. 执行匹配的 `sau kuaishou ...` 命令。
-4. 如果命令失败，再看 `references/troubleshooting.md`。
+1. Confira os pré-requisitos em `references/runtime-requirements.md`.
+2. Confira o contrato de comandos em `references/cli-contract.md`.
+3. Rode o comando `sau kuaishou ...` correspondente.
+4. Se o comando falhar, veja `references/troubleshooting.md`.
 
-## 支持动作
+## Ações possíveis
 
-- 使用 `sau kuaishou login --account <name>` 登录快手
-- 使用 `sau kuaishou check --account <name>` 校验 cookie 是否有效
-- 使用 `sau kuaishou upload-video ...` 上传快手视频
-- 使用 `sau kuaishou upload-note ...` 上传快手图文
+- `sau kuaishou login --account <name>` para entrar na conta do Kuaishou
+- `sau kuaishou check --account <name>` para validar o cookie
+- `sau kuaishou upload-video ...` para enviar um vídeo ao Kuaishou
+- `sau kuaishou upload-note ...` para enviar um post de imagens ao Kuaishou
 
-## 命令选择建议
+## Qual comando usar
 
-- 当用户需要新的 cookie，或现有 cookie 已失效时，使用 `login`
-- 当用户只需要确认 cookie 状态时，使用 `check`
-- 当用户要发布视频时，使用 `upload-video`
-- 当用户要发布图文时，使用 `upload-note`
+- Quando o usuário precisa de um cookie novo, ou o atual expirou, use `login`
+- Quando ele só quer saber o estado do cookie, use `check`
+- Quando ele vai publicar um vídeo, use `upload-video`
+- Quando ele vai publicar um post de imagens, use `upload-note`
 
-## 执行前检查
+## Antes de executar
 
-- 先确认当前 shell 里是否可以调用 `sau`
-- 如果 `sau` 不可用，按 `references/runtime-requirements.md` 里的回退方式处理
-- 当用户明确指定无头或有头模式时，显式传 `--headless` 或 `--headed`
-- 只有用户明确要求定时发布时，才使用 `--schedule`
-- 如果登录流程生成了本地二维码图片，不要只把图片路径告诉用户
-- 二维码图片本身就是给用户扫码的，优先直接把本地图片展示/发送给用户
+- Confirme se o `sau` pode ser chamado no shell atual
+- Se o `sau` não estiver disponível, siga a alternativa de `references/runtime-requirements.md`
+- Quando o usuário pedir com ou sem janela, passe `--headless` ou `--headed` explicitamente
+- Só use `--schedule` quando o usuário pedir publicação agendada
+- Se o login gerar uma imagem de QR code, não mande só o caminho do arquivo
+- Essa imagem existe para ser escaneada: mostre ou envie o arquivo direto ao usuário
 
-## 模板文件
+## Modelos prontos
 
-当你需要稳定的命令模板时，使用 `scripts/examples/` 下的文件：
+Quando quiser um modelo de comando estável, use os arquivos de `scripts/examples/`:
 
 - `kuaishou_commands.ps1`
 - `kuaishou_commands.sh`
 - `kuaishou_cli_template.py`
 
-## 参考文档
+## Documentos de referência
 
-- 运行前提：`references/runtime-requirements.md`
-- CLI 契约：`references/cli-contract.md`
-- 故障排查：`references/troubleshooting.md`
+- Pré-requisitos: `references/runtime-requirements.md`
+- Contrato da CLI: `references/cli-contract.md`
+- Solução de problemas: `references/troubleshooting.md`

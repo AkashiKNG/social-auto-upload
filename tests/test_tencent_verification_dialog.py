@@ -1,3 +1,4 @@
+# Os textos em chinês deste arquivo reproduzem o HTML real das páginas: traduzir quebraria o teste.
 import asyncio
 from pathlib import Path
 

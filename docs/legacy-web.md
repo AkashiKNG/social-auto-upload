@@ -1,47 +1,47 @@
-# 历史 Web 版本说明
+# A versão Web antiga
 
-这套 Web 相关代码主要包括：
+O código Web é basicamente:
 
 - `sau_backend.py`
 - `sau_backend/`
 - `sau_frontend/`
 
-它们属于项目过去阶段的实现，当前已经不是主线维护方向。
+Ele é de uma fase anterior do projeto e não é mais o caminho mantido.
 
-## 当前定位
+## Onde isso se encaixa hoje
 
-- 作为历史版本保留
-- 作为过去 API / Web 封装思路的参考
-- 不承诺当前一定可直接运行
-- 不承诺和当前 `uploader/`、`sau_cli.py` 的最新实现完全同步
+- fica como versão histórica
+- serve de referência para a antiga forma de embrulhar a API e a Web
+- não há garantia de que rode hoje
+- não há garantia de que esteja em dia com o `uploader/` e o `sau_cli.py` atuais
 
-## 为什么单独拆出来说明
+## Por que explicar isso à parte
 
-当前工程正在整体重构，主线已经切到：
+O projeto está sendo reestruturado, e o caminho atual é:
 
-- `uploader/`：核心平台实现
-- `sau_cli.py`：CLI 主入口
-- `skills/`：面向 agent 的 skill
+- `uploader/`: implementação central das plataformas
+- `sau_cli.py`: entrada da CLI
+- `skills/`: as skills voltadas a agentes
 
-所以 README 不再把 Web 版本当成主入口来介绍，避免让新用户误以为这是当前最稳定的使用方式。
+Por isso o README não apresenta mais a versão Web como entrada principal: assim ninguém novo pensa que ela é a forma mais estável de usar o projeto.
 
-## 如果你仍然想研究这套历史 Web 版本
+## Se você ainda quiser estudar a versão Web
 
-可以参考这些文件：
+Dá para olhar estes arquivos:
 
 - `sau_backend/README.md`
 - `sau_frontend/README.md`
 - `sau_backend.py`
 
-但请预期：
+Mas espere o seguinte:
 
-- 接口契约可能与当前主线不一致
-- 平台能力覆盖可能落后于当前 `uploader/`
-- 依赖和运行方式可能需要自行排障
+- o contrato dos endpoints pode não bater com o caminho atual
+- a cobertura de plataformas pode estar atrás do `uploader/`
+- as dependências e a forma de rodar podem exigir investigação sua
 
-## 当前推荐入口
+## Por onde começar hoje
 
-如果你要使用当前主线能力，优先看：
+Para usar o que o projeto faz hoje, veja:
 
 - `uploader/`
 - `sau_cli.py`
